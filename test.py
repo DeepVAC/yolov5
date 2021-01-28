@@ -13,7 +13,6 @@ from deepvac.syszux_deepvac import Deepvac
 class Yolov5Detection(Deepvac):
     def __init__(self, conf):
         conf.disable_git = True
-        config.device = "cpu"
         super(Yolov5Detection, self).__init__(conf)
 
     def initNetWithCode(self):
@@ -120,34 +119,11 @@ class Yolov5Detection(Deepvac):
         img = self._image_process(img)
         with torch.no_grad():
             output = self.net(img)[0]
-        # output = torch.cat(output, 1)
         pred = self._post_process(output)
         if self.conf.test.plot:
             self._plot_rectangle(img, pred, file_path)
-        # export torchscript
-        # self.exportTorchViaScript()
         if not pred.size(0):
             return ['None'], torch.Tensor([0])
         scores = pred[:, -2]
         classes = [self.conf.test.idx_to_cls[i] for i in pred[:, -1].long()]
         return classes, scores
-
-
-if __name__ == "__main__":
-    import os
-    import sys
-    images = sys.argv[1]
-    pth = sys.argv[2]
-
-    from tqdm import tqdm
-    from config import config
-    config.model_path = pth
-
-    det = Yolov5Detection(config)
-    none = 0
-    for fn in tqdm(os.listdir(images)):
-        fp = os.path.join(images, fn)
-        res = det(fp)
-        if not res[1].sum().item():
-            none += 1
-    print(">>> pth: ", pth, "\n>>> none: ", none)

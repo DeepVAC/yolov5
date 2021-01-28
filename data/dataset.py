@@ -1,12 +1,5 @@
 #! /usr/bin/python3
 # -*- coding:utf-8 -*-
-'''
-@Author     : __MHGL__
-@Data       : 2021/01/21
-@Desciption : get annotations from coco annotations and translate to yolov5 custom dataset: https://github.com/ultralytics/yolov5/blob/master/utils/datasets.py
-'''
-
-
 import os
 import cv2
 import sys
@@ -31,9 +24,6 @@ class Yolov5MosaicDataset(CocoCVDataset):
     def _getSample(self, index):
         label4 = []
         yc, xc = [int(random.uniform(-x, 2 * self.img_size + x)) for x in self.border]
-        # # # debug # # #
-        # print(">>> data/dataset.py +35 yc, xc changed!")
-        # yc, xc = 275, 308
         indices = [index] + [random.randint(0, len(self.ids)-1) for _ in range(3)]
         for i, index in enumerate(indices):
             # build img
@@ -94,12 +84,3 @@ class Yolov5MosaicDataset(CocoCVDataset):
             l[:, 0] = i
         return torch.stack(img, 0), torch.cat(label, 0)
 
-
-if __name__ == '__main__':
-    dataset = Yolov5MosaicDataset(config.train)
-    from torch.utils.data import DataLoader
-
-
-    loader = DataLoader(dataset, batch_size=8, shuffle=True, collate_fn=Yolov5MosaicDataset.collate_fn)
-    for img, t in loader:
-        print("t: ", t)

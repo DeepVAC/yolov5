@@ -1,12 +1,5 @@
 #! /usr/bin/python3
 # -*- coding:utf-8 -*-
-'''
-@Author     : __MHGL__
-@Data       : 2021/01/25
-@Desciption : deepvac yolov5 training, refer to https://github.com/DeepVAC/deepvac/blob/master/deepvac/syszux_deepvac.py
-'''
-
-
 import os
 import sys
 sys.path.append("../deepvac")
@@ -21,8 +14,6 @@ from deepvac.syszux_loss import Yolov5Loss
 from data.dataset import Yolov5MosaicDataset
 from deepvac.syszux_deepvac import DeepvacTrain
 
-
-torch.set_printoptions(precision=10)
 
 class ModelEMA:
     def __init__(self, model, deepvac_config):
@@ -88,9 +79,6 @@ class DeepvacYolov5Train(DeepvacTrain):
             else:
                 pg1.append(v)
 
-        # print(">>> pg0: ", len(pg0))
-        # print(">>> pg1: ", len(pg1))
-        # print(">>> pg2: ", len(pg2))
         self.optimizer = torch.optim.SGD(pg0, lr=self.conf.lr0, momentum=self.conf.momentum, nesterov=self.conf.nesterov)
         self.optimizer.add_param_group({'params': pg1, 'weight_decay': self.conf.weight_decay})
         self.optimizer.add_param_group({'params': pg2})
@@ -113,13 +101,9 @@ class DeepvacYolov5Train(DeepvacTrain):
     def earlyIter(self):
         super(DeepvacYolov5Train, self).earlyIter()
         self.sample = self.sample.float() / 255.
-        # print(">>> input: ", self.sample.sum())
 
     def doLoss(self):
-        # print(">>> target: ", self.target.sum())
-        # print(">>> pred: ", [i.sum() for i in self.output])
         self.loss, loss_items = self.criterion(self.output, self.target)
-        # print(">>> loss: ", loss_items)
         self.addScalar('{}/boxLoss'.format(self.phase), loss_items[0], self.epoch)
         self.addScalar('{}/objLoss'.format(self.phase), loss_items[1], self.epoch)
         self.addScalar('{}/clsLoss'.format(self.phase), loss_items[2], self.epoch)
@@ -130,10 +114,6 @@ class DeepvacYolov5Train(DeepvacTrain):
             self.scaler.scale(self.loss).backward()
         else:
             self.loss.backward()
-        # for i, (name, param) in enumerate(self.net.named_parameters()):
-        #     if i in [3, 187, 334]:
-        #         print(f"{name}:\n{param.grad.sum()}")
-
 
     def doOptimize(self):
         super(DeepvacYolov5Train, self).doOptimize()
@@ -147,14 +127,12 @@ class DeepvacYolov5Train(DeepvacTrain):
             self.ema.updates = epoch_start * len(self.train_loader) // self.conf.nominal_batch_factor
         self.optimizer.zero_grad()
         for epoch in range(epoch_start, self.conf.epoch_num):
-            # print('*' * 59)
             self.epoch = epoch
             LOG.logI('Epoch {} started...'.format(self.epoch))
             self.processTrain()
             if self.epoch % 10 == 0:
                 self.processVal()
                 self.processAccept()
-                # pass
 
 
 if __name__ == '__main__':
