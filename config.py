@@ -1,7 +1,5 @@
 #! /usr/bin/python3
 # -*- coding:utf-8 -*-
-import sys
-sys.path.append("../deepvac/")
 import math
 
 from deepvac.syszux_config import *
@@ -59,8 +57,8 @@ config.train.augment = True
 config.train.pin_memory = True
 config.train.img_size = config.img_size
 config.train.border = [-config.img_size / 2] * 2
-config.train.img_folder = "/gemfield/hostpv/PornYoloDataset/train"
-config.train.annotation = "/gemfield/hostpv/PornYoloDataset/train.json"
+config.train.img_folder = "<train-img-folder>"
+config.train.annotation = "<train-annotation-file>"
 
 # # # val # # #
 config.val = AttrDict()
@@ -70,12 +68,12 @@ config.val.shuffle = False
 config.val.batch_size = 20
 config.val.img_size = config.img_size
 config.val.border = [-config.img_size / 2] * 2
-config.val.img_folder = "/gemfield/hostpv/PornYoloDataset/val"
-config.val.annotation = "/gemfield/hostpv/PornYoloDataset/val.json"
+config.val.img_folder = "<val-img-folder>"
+config.val.annotation = "<val-annotation-file>"
 
 # # # test # # #
 config.test = AttrDict()
 config.test.plot = False
 config.test.iou_thres = 0.25
 config.test.conf_thres = 0.45
-config.test.idx_to_cls = ["Female-Breast", "Female-Gential", "Male-Gential", "Buttock"]
+config.test.idx_to_cls = ["cls0", "cls1", "cls2", "cls3"]

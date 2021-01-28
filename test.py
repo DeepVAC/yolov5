@@ -1,5 +1,3 @@
-import sys
-sys.path.append("../deepvac")
 import cv2
 import torch
 import numpy as np
@@ -83,11 +81,10 @@ class Yolov5Detection(Deepvac):
         return pred
 
     def _plot_rectangle(self, img, pred, file_path):
-        save_dir = "output/detect"
         file_name = file_path.split('/')[-1]
+        save_dir = "output/detect"
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
-
 
         n, c, h, w = img.shape
         image = cv2.imread(file_path)
@@ -110,20 +107,25 @@ class Yolov5Detection(Deepvac):
             if (max(coord) > max(h0, w0)) or min(coord) < 0:
                 continue
             cv2.rectangle(image, (coord[0], coord[1]), (coord[2], coord[3]), (0, 0, 255), 2)
-            cv2.putText(image, f"{cls}-{score:.2f}", tuple(coord[:2]), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,0), 3)
+            cv2.putText(image, "{0}-{1:.2f}".format(cls, score), tuple(coord[:2]), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,0), 3)
             cv2.imwrite(os.path.join(save_dir, file_name), image)
 
-    def __call__(self, file_path):
+    def setInput(self, file_path):
+        self.file_path = file_path
         image = cv2.imread(file_path, 1)
         img = self._letter_box(image, self.conf.img_size)[0]
-        img = self._image_process(img)
-        with torch.no_grad():
-            output = self.net(img)[0]
-        pred = self._post_process(output)
-        if self.conf.test.plot:
-            self._plot_rectangle(img, pred, file_path)
+        self.sample = self._image_process(img)
+
+    def getOutput(self):
+        pred = self._post_process(self.output)
+        self.pred = pred
         if not pred.size(0):
-            return ['None'], torch.Tensor([0])
+            return None, 0
+        if self.conf.test.plot:
+            self._plot_rectangle(self.sample, self.pred, self.file_path)
         scores = pred[:, -2]
         classes = [self.conf.test.idx_to_cls[i] for i in pred[:, -1].long()]
         return classes, scores
+
+    def process(self):
+        self.output = self.net(self.sample)[0]

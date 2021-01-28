@@ -1,8 +1,6 @@
 #! /usr/bin/python3
 # -*- coding:utf-8 -*-
 import os
-import sys
-sys.path.append("../deepvac")
 import math
 import torch
 import numpy as np
@@ -44,7 +42,12 @@ class ModelEMA:
 class DeepvacYolov5Train(DeepvacTrain):
     def __init__(self, config):
         super(DeepvacYolov5Train, self).__init__(config)
+
+    def auditConfig(self):
+        super(DeepvacYolov5Train, self).auditConfig()
         self.warmup_iter = max(round(self.conf.warmup_epochs * len(self.train_loader)), 1e3)
+        if self.conf.ema:
+            self.ema.updates = self.epoch * len(self.train_loader) // self.conf.nominal_batch_factor
 
     def initNetWithCode(self):
         self.net = Yolov5L(self.conf)
@@ -91,12 +94,13 @@ class DeepvacYolov5Train(DeepvacTrain):
         if self.is_val:
             return
         ni = self.iter
-        if ni <= self.warmup_iter:
-            xi = [0, self.warmup_iter]
-            for j, x in enumerate(self.optimizer.param_groups):
-                x['lr'] = np.interp(ni, xi, [self.conf.warmup_bias_lr if j == 2 else 0.0, x["initial_lr"] * self.conf.lr_step(self.epoch)])
-                if 'momentum' in x:
-                    x['momentum'] = np.interp(ni, xi, [self.conf.warmup_momentum, self.conf.momentum])
+        if ni > self.warmup_iter:
+            return
+        xi = [0, self.warmup_iter]
+        for j, x in enumerate(self.optimizer.param_groups):
+            x['lr'] = np.interp(ni, xi, [self.conf.warmup_bias_lr if j == 2 else 0.0, x["initial_lr"] * self.conf.lr_step(self.epoch)])
+            if 'momentum' in x:
+                x['momentum'] = np.interp(ni, xi, [self.conf.warmup_momentum, self.conf.momentum])
 
     def earlyIter(self):
         super(DeepvacYolov5Train, self).earlyIter()
@@ -109,30 +113,10 @@ class DeepvacYolov5Train(DeepvacTrain):
         self.addScalar('{}/clsLoss'.format(self.phase), loss_items[2], self.epoch)
         self.accuracy = 0
 
-    def doBackward(self):
-        if self.conf.amp:
-            self.scaler.scale(self.loss).backward()
-        else:
-            self.loss.backward()
-
     def doOptimize(self):
         super(DeepvacYolov5Train, self).doOptimize()
         if self.conf.ema:
             self.ema.update(self.net)
-
-    def process(self):
-        self.iter = 0
-        epoch_start = self.epoch
-        if self.conf.ema:
-            self.ema.updates = epoch_start * len(self.train_loader) // self.conf.nominal_batch_factor
-        self.optimizer.zero_grad()
-        for epoch in range(epoch_start, self.conf.epoch_num):
-            self.epoch = epoch
-            LOG.logI('Epoch {} started...'.format(self.epoch))
-            self.processTrain()
-            if self.epoch % 10 == 0:
-                self.processVal()
-                self.processAccept()
 
 
 if __name__ == '__main__':

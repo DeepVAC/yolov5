@@ -2,10 +2,8 @@
 # -*- coding:utf-8 -*-
 import os
 import cv2
-import sys
 import torch
 import random
-sys.path.append("../deepvac")
 import numpy as np
 
 from PIL import Image
