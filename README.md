@@ -131,7 +131,7 @@ python3 test.py
 请参考[DeepVAC](https://github.com/DeepVAC/deepvac)
 
 ## TODO
-- 20200201 Yolov5S & Yolov5L
-- Yolov5M
-- Yolov5X
-- update follow https://github.com/ultralytics/yolov5
+- 20210201 项目增加了对Yolov5S和Yolov5L的支持    
+- 增加对Yolov5M的支持    
+- 增加对Yolov5x的支持    
+- 时刻跟进 https://github.com/ultralytics/yolov5
