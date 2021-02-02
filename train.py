@@ -53,8 +53,6 @@ class DeepvacYolov5Train(DeepvacTrain):
         self.net.detect.is_training = True
         if self.conf.ema:
             self.ema = ModelEMA(self.net, self.conf)
-        if not self.conf.model_path:
-            self.net = self.net.to(self.device)
 
     def initTrainLoader(self):
         self.train_dataset = Yolov5MosaicDataset(self.conf.train)
