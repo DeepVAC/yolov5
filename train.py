@@ -6,11 +6,9 @@ import torch
 import numpy as np
 
 from copy import deepcopy
-from deepvac.syszux_log import LOG
 from deepvac.syszux_yolo import Yolov5L
-from deepvac.syszux_loss import Yolov5Loss
 from data.dataset import Yolov5MosaicDataset
-from deepvac.syszux_deepvac import DeepvacTrain
+from deepvac import LOG, Yolov5Loss, DeepvacTrain
 
 
 class ModelEMA:
@@ -50,7 +48,7 @@ class DeepvacYolov5Train(DeepvacTrain):
             self.ema.updates = self.epoch * len(self.train_loader) // self.conf.nominal_batch_factor
 
     def initNetWithCode(self):
-        self.net = Yolov5L(self.conf)
+        self.net = Yolov5L(self.conf.class_num, self.conf.strides).to(self.device)
         self.conf.model = self.net
         self.net.detect.is_training = True
         if self.conf.ema:
