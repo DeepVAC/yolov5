@@ -1,0 +1,10 @@
+# parameters
+*.pt
+*.pth
+*.pkl
+output/*
+
+# noneed files
+*.bk
+log/*
+__pycache__/*

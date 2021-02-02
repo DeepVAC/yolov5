@@ -6,10 +6,8 @@ import torch
 import random
 import numpy as np
 
-from PIL import Image
 from config import config
-from deepvac.syszux_loader import CocoCVDataset
-from deepvac.syszux_executor import YoloAugExecutor
+from deepvac import CocoCVDataset, YoloAugExecutor
 
 
 class Yolov5MosaicDataset(CocoCVDataset):
@@ -51,8 +49,7 @@ class Yolov5MosaicDataset(CocoCVDataset):
             padh = y1a - y1b
             # build label
             cls, det, _ = self.loadAnns(index)
-            label = np.hstack((cls.reshape(-1, 1), det))
-            label = label if label.sum() else np.empty((0, 5))
+            label = np.hstack((cls.reshape(-1, 1), det)) if cls.size else np.empty((0, 5))
             if label.size:
                 label[:, 3] = wr * (label[:, 1] + label[:, 3]) + padw
                 label[:, 4] = hr * (label[:, 2] + label[:, 4]) + padh

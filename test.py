@@ -3,9 +3,8 @@ import torch
 import numpy as np
 
 from torchvision import ops
-from deepvac.syszux_log import LOG
 from deepvac.syszux_yolo import Yolov5L
-from deepvac.syszux_deepvac import Deepvac
+from deepvac import LOG, Deepvac, OsWalkerLoader
 
 
 class Yolov5Detection(Deepvac):
@@ -14,8 +13,7 @@ class Yolov5Detection(Deepvac):
         super(Yolov5Detection, self).__init__(conf)
 
     def initNetWithCode(self):
-        self.net = Yolov5L(self.conf).to(self.device)
-        self.net.detect.stride = torch.Tensor(self.conf.strides)
+        self.net = Yolov5L(self.conf.class_num, self.conf.strides)
         self.net.detect.is_training = False
 
     def _letter_box(self, img, img_size, color=(114, 114, 114), auto=True, scaleFill=False, scaleup=True):
@@ -82,7 +80,7 @@ class Yolov5Detection(Deepvac):
 
     def _plot_rectangle(self, img, pred, file_path):
         file_name = file_path.split('/')[-1]
-        save_dir = "output/detect"
+        save_dir = self.conf.test.plot_dir
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
 
@@ -129,3 +127,24 @@ class Yolov5Detection(Deepvac):
 
     def process(self):
         self.output = self.net(self.sample)[0]
+
+
+if __name__ == "__main__":
+    import os
+
+    from config import config
+    '''
+        you must assign:
+        config.class_num
+        config.model_path
+        config.test.img_folder
+        config.test.idx_to_cls
+        first
+    '''
+
+    det = Yolov5Detection(config)
+    test_dataset = OsWalkerLoader(config.test)
+    for fp in test_dataset():
+        print("img_file: ", fp)
+        res = det(fp)
+        print("result: ", res)
