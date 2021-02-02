@@ -40,7 +40,8 @@ config.decay = 0.9999
 
 # # # output # # #
 config.output_dir = "output"
-config.trace_model_dir = "output/trace.pt"
+# now yolov5-1 support torch.jit.script, not support torch.jit.trace, that will cause fix input_size in c++ program
+# config.trace_model_dir = "output/trace.pt"
 config.script_model_dir = "output/script.pt"
 
 # # # loss # # #
@@ -80,5 +81,5 @@ config.test.plot = False
 config.test.plot_dir = "output/detect"
 config.test.iou_thres = 0.45
 config.test.conf_thres = 0.25
-config.test.img_folder = "data/coco/images/test2017"
+config.test.input_dir = "data/coco/images/test2017"
 config.test.idx_to_cls = ["cls{}".format(i) for i in range(config.class_num)]

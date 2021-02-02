@@ -48,11 +48,13 @@ class DeepvacYolov5Train(DeepvacTrain):
             self.ema.updates = self.epoch * len(self.train_loader) // self.conf.nominal_batch_factor
 
     def initNetWithCode(self):
-        self.net = Yolov5L(self.conf.class_num, self.conf.strides).to(self.device)
+        self.net = Yolov5L(self.conf.class_num, self.conf.strides)
         self.conf.model = self.net
         self.net.detect.is_training = True
         if self.conf.ema:
             self.ema = ModelEMA(self.net, self.conf)
+        if not self.conf.model_path:
+            self.net = self.net.to(self.device)
 
     def initTrainLoader(self):
         self.train_dataset = Yolov5MosaicDataset(self.conf.train)
