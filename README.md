@@ -22,10 +22,10 @@ DeepVAC-compliant Yolov5 implementation
 
 ## 3. 准备数据集
 - 获取coco2017数据集     
-[coco2017labels.zip](https://github.com/ultralytics/yolov5/releases/download/v1.0/coco2017labels.zip)
-[train2017.zip](http://images.cocodataset.org/zips/train2017.zip)
-[val2017.zip](http://images.cocodataset.org/zips/val2017.zip)
-[test2017.zip](http://images.cocodataset.org/zips/test2017.zip)
+[coco2017labels.zip](https://github.com/ultralytics/yolov5/releases/download/v1.0/coco2017labels.zip)     
+[train2017.zip](http://images.cocodataset.org/zips/train2017.zip)     
+[val2017.zip](http://images.cocodataset.org/zips/val2017.zip)     
+[test2017.zip](http://images.cocodataset.org/zips/test2017.zip)     
 
 - 解压coco2017数据集
 
