@@ -1,5 +1,7 @@
 # Yolov5
-DeepVAC-compliant Yolov5 implementation
+DeepVAC-compliant Yolov5 implementation   
+- 20210202: add Yolov5S & Yolov5L      
+- TODO
 
 # 简介
 本项目实现了符合DeepVAC规范的Yolov5。
@@ -20,7 +22,7 @@ DeepVAC-compliant Yolov5 implementation
 
 ## 3. 准备数据集
 ```bash
-    bash data/script/get_coco.sh
+bash data/script/get_coco.sh
 ```
 获取coco2017数据集。     
 
@@ -32,13 +34,13 @@ DeepVAC-compliant Yolov5 implementation
 config.model_path = <pretrained-model-path>
 ```
 
-- 指定训练集、验证集目录和对应的标注txt文件。     
+- 指定训练集、验证集目录和对应的标注txt文件, custom dataset必须为标准COCO格式数据集。     
 ```python
-config.train.img_folder = <train-images-folder>
-config.train.annotation = <train-annotation-path>
+config.train.img_folder = <your-custom-train-img-folder>
+config.train.annotation = <your-custom-train-annotation-path>
 
-config.val.img_folder = <val-images-folder>
-config.val.annotation = <val-annotation-path>
+config.val.img_folder = <your-custom-val-img-folder>
+config.val.annotation = <your-custom-val-annotation-path>
 ```
 
 - 指定测试集目录，可以通过plot参数来进行可视化。           

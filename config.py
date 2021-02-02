@@ -60,8 +60,8 @@ config.train.pin_memory = True
 # input
 config.train.img_size = config.img_size
 config.train.border = [-config.img_size / 2] * 2
-config.train.img_folder = "<train-img-folder>"
-config.train.annotation = "<train-annotation-file>"
+config.train.img_folder = "data/coco/images/train2017"
+config.train.annotation = "data/coco/instances_train2017.json"
 
 # # # val # # #
 # augment
@@ -72,13 +72,13 @@ config.val.batch_size = 20
 # input
 config.val.img_size = config.img_size
 config.val.border = [-config.img_size / 2] * 2
-config.val.img_folder = "<val-img-folder>"
-config.val.annotation = "<val-annotation-file>"
+config.val.img_folder = "data/coco/images/val2017"
+config.val.annotation = "data/coco/instances_val2017.json"
 
 # # # test # # #
 config.test.plot = False
 config.test.plot_dir = "output/detect"
 config.test.iou_thres = 0.45
 config.test.conf_thres = 0.25
-config.test.img_folder = "<test-images-folder>"
-config.test.idx_to_cls = ["1", "2", "3", "4"]
+config.test.img_folder = "data/coco/images/test2017"
+config.test.idx_to_cls = ["cls{}".format(i) for i in range(config.class_num)]
