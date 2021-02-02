@@ -4,7 +4,7 @@ DeepVAC-compliant Yolov5 implementation
 - TODO
 
 # 简介
-本项目实现了符合DeepVAC规范的Yolov5。
+本项目实现了符合DeepVAC规范的Yolov5   
 
 **项目依赖**
 
@@ -15,43 +15,53 @@ DeepVAC-compliant Yolov5 implementation
 # 如何运行本项目
 
 ## 1. 阅读[DeepVAC规范](https://github.com/DeepVAC/deepvac)
-可以粗略阅读，建立起第一印象。
+可以粗略阅读，建立起第一印象   
 
 ## 2. 准备运行环境
-使用Deepvac规范指定[Docker镜像](https://github.com/DeepVAC/deepvac#2-%E7%8E%AF%E5%A2%83%E5%87%86%E5%A4%87)。
+使用Deepvac规范指定[Docker镜像](https://github.com/DeepVAC/deepvac#2-%E7%8E%AF%E5%A2%83%E5%87%86%E5%A4%87)   
 
 ## 3. 准备数据集
-```bash
-bash data/script/get_coco.sh
+- 获取coco2017数据集     
+[coco2017labels.zip](https://github.com/ultralytics/yolov5/releases/download/v1.0/coco2017labels.zip)
+[train2017.zip](http://images.cocodataset.org/zips/train2017.zip)
+[val2017.zip](http://images.cocodataset.org/zips/val2017.zip)
+[test2017.zip](http://images.cocodataset.org/zips/test2017.zip)
+
+- 解压coco2017数据集
+
+- 数据集配置(config.py)
+```python
+config.train.img_folder = <train2017-extract-folder/train2017/>
+config.train.annotation = <coco2017labels-extract-folder/instances_train2017.json>
+
+config.val.img_folder = <val2017-extract-folder/val2017/>
+config.val.annotation = <coco2017labels-extract-folder/instances_val2017.json>
+
+config.test.img_folder = <test2017-extract-folder/test2017/>
+config.test.plot = True  # 可视化
 ```
-获取coco2017数据集。     
+- 关于dataloader相关配置详见config.train, config.val
+- 如果是自己的数据集，那么必须要符合标准coco标注格式
 
-## 4. 修改配置文件
+## 4. 训练相关配置
 
-修改config.py文件。主要修改内容：
-- 指定预训练模型路径。     
+- 指定预训练模型路径     
+[yolov5s & yolov5l](https://pan.baidu.com/share/init?surl=oA4uZUlWUtEq2dOMlBZ8hg) 提取码: g4tu
+- 指定训练分类数量
+- 是否采用混合精度训练
+- 是否采用ema策略
+- 是否采用梯度积攒到一定数量在进行反向更新梯度策略
+
 ```python
 config.model_path = <pretrained-model-path>
-```
 
-- 指定训练集、验证集目录和对应的标注txt文件, custom dataset必须为标准COCO格式数据集。     
-```python
-config.train.img_folder = <your-custom-train-img-folder>
-config.train.annotation = <your-custom-train-annotation-path>
-
-config.val.img_folder = <your-custom-val-img-folder>
-config.val.annotation = <your-custom-val-annotation-path>
-```
-
-- 指定测试集目录，可以通过plot参数来进行可视化。           
-```python
-config.test.img_folder = <test-images-folder>
-config.test.plot = True
-```
-
-- 修改分类数
-```
 config.class_num = 80
+
+config.amp = False
+
+config.ema = True
+
+config.nominal_batch_factor = 4  # 在样本数量积攒至64后再进行反向更新梯度
 ```
 
 ## 5. 训练
