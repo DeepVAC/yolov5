@@ -7,10 +7,10 @@ from deepvac.syszux_yolo import Yolov5L
 from deepvac import LOG, Deepvac, OsWalkerLoader
 
 
-class Yolov5Detection(Deepvac):
+class Yolov5Test(Deepvac):
     def __init__(self, conf):
         conf.disable_git = True
-        super(Yolov5Detection, self).__init__(conf)
+        super(Yolov5Test, self).__init__(conf)
 
     def initNetWithCode(self):
         self.net = Yolov5L(self.conf.class_num, self.conf.strides)
@@ -142,7 +142,7 @@ if __name__ == "__main__":
         first
     '''
 
-    det = Yolov5Detection(config)
+    det = Yolov5Test(config)
     test_dataset = OsWalkerLoader(config.test)
     for fp in test_dataset():
         print("img_file: ", fp)

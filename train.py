@@ -51,6 +51,9 @@ class DeepvacYolov5Train(DeepvacTrain):
         self.net = Yolov5L(self.conf.class_num, self.conf.strides)
         self.conf.model = self.net
         self.net.detect.is_training = True
+
+    def initNetPost(self):
+        super(DeepvacYolov5Train, self).initNetPost()
         if self.conf.ema:
             self.ema = ModelEMA(self.net, self.conf)
 
