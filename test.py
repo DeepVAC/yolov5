@@ -4,24 +4,20 @@ import numpy as np
 
 from torchvision import ops
 from deepvac.syszux_yolo import Yolov5L
-from deepvac import LOG, Deepvac, OsWalkerLoader
+from deepvac import LOG, Deepvac, OsWalkDataset
 
 
-class Yolov5TestDataset(torch.utils.data.Dataset):
+class Yolov5TestDataset(OsWalkDataset):
     def __init__(self, deepvac_config):
-        super(Yolov5TestDataset, self).__init__()
-        self.img_size = deepvac_config.img_size
-        self.files = OsWalkerLoader(deepvac_config.test)()
-
-    def __len__(self):
-        return len(self.files)
+        self.conf = deepvac_config
+        super(Yolov5TestDataset, self).__init__(deepvac_config.test)
 
     def __getitem__(self, index):
         image = self.files[index]
         img = cv2.imread(image, 1)
         h0, w0, _ = img.shape
 
-        img = self.letterBox(img, self.img_size)
+        img = self.letterBox(img, self.conf.img_size)
         h, w, _ = img.shape
 
         r = min(h / h0, w / w0)
