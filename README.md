@@ -6,7 +6,7 @@ DeepVAC-compliant Yolov5 implementation
 
 **项目依赖**
 
-- deepvac >= 0.2.5
+- deepvac >= 0.2.6
 - pytorch >= 1.8.0
 - torchvision >= 0.7.0
 
@@ -38,16 +38,16 @@ rm coco2017labels.zip
 
 - 数据集配置
 在config.py文件中作如下配置：     
+
 ```python
-config.train.img_folder = <train2017-extract-folder/train2017/>
-config.train.annotation = <coco2017labels-extract-folder/instances_train2017.json>
-
-config.val.img_folder = <val2017-extract-folder/val2017/>
-config.val.annotation = <coco2017labels-extract-folder/instances_val2017.json>
-
-config.test.input_dir = <test2017-extract-folder/test2017/>
-config.test.plot = True  # 可视化
+config.train.img_folder = <train2017-extract-folder/train2017/>      
+config.train.annotation = <coco2017labels-extract-folder/instances_train2017.json>       
+config.val.img_folder = <val2017-extract-folder/val2017/>           
+config.val.annotation = <coco2017labels-extract-folder/instances_val2017.json>        
+config.test.input_dir = <test2017-extract-folder/test2017/>           
+config.test.plot = True  # 可视化             
 ```
+
 - 如果是自己的数据集，那么必须要符合标准coco标注格式
 
 ## 4. 训练相关配置
@@ -62,18 +62,13 @@ config.test.plot = True  # 可视化
 
 ```python
 config.model_path = <pretrained-model-path>
-
 config.class_num = 80
-
 config.amp = False
-
 config.ema = True
-
 config.nominal_batch_factor = 4  # 在样本数量积攒至64后再进行反向更新梯度
-
 config.train.shuffle = True
 config.train.batch_size = 16
-config.train.numworkers = 8
+config.train.num_workers = 8
 config.train.pin_memory = True
 ```
 
@@ -104,19 +99,62 @@ python train.py --rank 1 --gpu 1
 
 ## 6. 测试
 
-指定要测试模型的路径，在config.py指定待测模型路径：
+- 测试相关配置
+
+```python
+config.class_num = <class_num>
+config.test.input_dir = <test-data-path>
+config.test.idx_to_cls = <class-index-to-class-name-maps>
+config.test.plot = <True or False>  # optional
+config.test.plot_dir = <path-to-save-images>  # optional
+```
+
+- 加载模型(*.pth)
 
 ```python
 config.model_path = <trained-model-path>
 ```
 
-然后运行测试脚本：
+
+- 运行测试脚本：
 
 ```bash
 python3 test.py
 ```
 
-## 7， 更多功能
+## 7. 使用torchscript模型
+如果训练过程中未开启config.script_model_path开关，可以在测试过程中转化torchscript模型     
+- 转换torchscript模型(*.pt)     
+
+```python
+config.script_model_path = "output/script.pt"
+```
+  按照步骤6完成测试，torchscript模型将保存至config.script_model_path指定文件位置      
+
+- 加载torchscript模型
+
+```python
+config.jit_model_path = <torchscript-model-path>
+```
+
+## 8. 使用静态量化模型
+如果训练过程中未开启config.static_quantize_dir开关，可以在测试过程中转化静态量化模型     
+- 转换静态模型(*.sq)     
+
+```python
+config.static_quantize_dir = "output/script.sq"
+```
+  按照步骤6完成测试，静态量化模型将保存至config.static_quantize_dir指定文件位置      
+
+- 加载静态量化模型
+
+```python
+config.jit_model_path = <static-quantize-model-path>
+```
+当前yolov5-1支持静态量化模型导出，但在test过程中会出现upsample错误，我们推测是pytorch bug导致了这个问题，目前这个bug已经加入TODO    
+
+
+## 9. 更多功能
 如果要在本项目中开启如下功能：
 - 预训练模型加载
 - checkpoint加载
@@ -130,8 +168,9 @@ python3 test.py
 
 请参考[DeepVAC](https://github.com/DeepVAC/deepvac)
 
-## TODO
+## 10. TODO
 - 20210201 项目增加了对Yolov5S和Yolov5L的支持    
+- 修复在test过程中，静态量化模型报错问题    
 - 增加对Yolov5M的支持    
 - 增加对Yolov5x的支持    
 - 时刻跟进 https://github.com/ultralytics/yolov5

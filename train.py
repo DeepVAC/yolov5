@@ -11,32 +11,6 @@ from data.dataset import Yolov5MosaicDataset
 from deepvac import LOG, Yolov5Loss, DeepvacTrain
 
 
-class ModelEMA:
-    def __init__(self, model, deepvac_config):
-        self.ema = deepcopy(model.module if self.is_parallel(model) else model).eval()
-        self.ema = self.ema.to(deepvac_config.device)
-        self.updates = deepvac_config.updates
-        self.decay = lambda x: deepvac_config.decay * (1 - math.exp(-x / 2000))
-        for p in self.ema.parameters():
-            p.requires_grad_(False)
-
-    def update(self, model):
-        with torch.no_grad():
-            self.updates += 1
-            d = self.decay(self.updates)
-            msd = model.module.state_dict() if self.is_parallel(model) else model.state_dict()
-            for k, v in self.ema.state_dict().items():
-                if v.dtype.is_floating_point:
-                    v *= d
-                    v += (1. - d) * msd[k].detach()
-
-    def is_parallel(self, model):
-        return type(model) in (torch.nn.parallel.DataParallel, torch.nn.parallel.DistributedDataParallel)
-
-    def update_attr(self, model, include=(), exclude=('process_group', 'reducer')):
-        copy_attr(self.ema, model, include, exclude)
-
-
 class DeepvacYolov5Train(DeepvacTrain):
     def __init__(self, config):
         super(DeepvacYolov5Train, self).__init__(config)
@@ -44,15 +18,10 @@ class DeepvacYolov5Train(DeepvacTrain):
     def auditConfig(self):
         super(DeepvacYolov5Train, self).auditConfig()
         self.warmup_iter = max(round(self.conf.warmup_epochs * len(self.train_loader)), 1e3)
-        if self.conf.ema:
-            self.ema.updates = self.epoch * len(self.train_loader) // self.conf.nominal_batch_factor
 
     def initNetWithCode(self):
         self.net = Yolov5L(self.conf.class_num, self.conf.strides)
         self.conf.model = self.net
-        self.net.detect.is_training = True
-        if self.conf.ema:
-            self.ema = ModelEMA(self.net, self.conf)
 
     def initTrainLoader(self):
         self.train_dataset = Yolov5MosaicDataset(self.conf.train)
@@ -100,21 +69,12 @@ class DeepvacYolov5Train(DeepvacTrain):
             if 'momentum' in x:
                 x['momentum'] = np.interp(ni, xi, [self.conf.warmup_momentum, self.conf.momentum])
 
-    def earlyIter(self):
-        super(DeepvacYolov5Train, self).earlyIter()
-        self.sample = self.sample.float() / 255.
-
     def doLoss(self):
-        self.loss, loss_items = self.criterion(self.output, self.target)
+        self.loss, loss_items = self.criterion(self.net.detect.output, self.target)
         self.addScalar('{}/boxLoss'.format(self.phase), loss_items[0], self.epoch)
         self.addScalar('{}/objLoss'.format(self.phase), loss_items[1], self.epoch)
         self.addScalar('{}/clsLoss'.format(self.phase), loss_items[2], self.epoch)
         self.accuracy = 0
-
-    def doOptimize(self):
-        super(DeepvacYolov5Train, self).doOptimize()
-        if self.conf.ema:
-            self.ema.update(self.net)
 
 
 if __name__ == '__main__':
