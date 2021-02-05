@@ -6,7 +6,7 @@ DeepVAC-compliant Yolov5 implementation
 
 **项目依赖**
 
-- deepvac >= 0.2.5
+- deepvac >= 0.2.6
 - pytorch >= 1.8.0
 - torchvision >= 0.7.0
 

@@ -43,7 +43,8 @@ config.output_dir = "output"
 # now yolov5-1 support torch.jit.script, not support torch.jit.trace, that will cause fix input_size in c++ program
 # config.trace_model_dir = "output/trace.pt"
 config.script_model_dir = "output/script.pt"
-config.static_quantize_dir = "output/script.pt.sq"
+# bug to fix: now yolov5-1 supoort static quantize, but got error while test
+# config.static_quantize_dir = "output/script.pt.sq"
 
 # # # loss # # #
 config.obj = 1.0
@@ -78,7 +79,7 @@ config.val.img_folder = "data/coco/images/val2017"
 config.val.annotation = "data/coco/instances_val2017.json"
 
 # # # test # # #
-config.test.plot = False
+config.test.plot = True
 config.test.plot_dir = "output/detect"
 config.test.iou_thres = 0.45
 config.test.conf_thres = 0.25

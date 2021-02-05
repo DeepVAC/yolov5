@@ -22,7 +22,6 @@ class DeepvacYolov5Train(DeepvacTrain):
     def initNetWithCode(self):
         self.net = Yolov5L(self.conf.class_num, self.conf.strides)
         self.conf.model = self.net
-        self.net.detect.is_training = True
 
     def initTrainLoader(self):
         self.train_dataset = Yolov5MosaicDataset(self.conf.train)
