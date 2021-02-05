@@ -32,11 +32,15 @@ config.device = 'cuda'
 config.img_size = 416
 config.class_num = 80
 config.strides = [8, 16, 32]
+# load model path
 config.model_path = "<pretrained-model-path>"
+# load script and quantize model path
+# config.jit_model_path = "<pretrained-model-path>"
+
 # ema model
 config.ema = True
-config.updates = 0
-config.decay = 0.9999
+# define ema_decay with other func
+# config.ema_decay = lambda x: 0.9999 * (1 - math.exp(-x / 2000))
 
 # # # output # # #
 config.output_dir = "output"
@@ -79,7 +83,7 @@ config.val.img_folder = "data/coco/images/val2017"
 config.val.annotation = "data/coco/instances_val2017.json"
 
 # # # test # # #
-config.test.plot = True
+config.test.plot = False
 config.test.plot_dir = "output/detect"
 config.test.iou_thres = 0.45
 config.test.conf_thres = 0.25

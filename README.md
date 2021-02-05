@@ -38,16 +38,16 @@ rm coco2017labels.zip
 
 - 数据集配置
 在config.py文件中作如下配置：     
+
 ```python
-config.train.img_folder = <train2017-extract-folder/train2017/>
-config.train.annotation = <coco2017labels-extract-folder/instances_train2017.json>
-
-config.val.img_folder = <val2017-extract-folder/val2017/>
-config.val.annotation = <coco2017labels-extract-folder/instances_val2017.json>
-
-config.test.input_dir = <test2017-extract-folder/test2017/>
-config.test.plot = True  # 可视化
+config.train.img_folder = <train2017-extract-folder/train2017/>      
+config.train.annotation = <coco2017labels-extract-folder/instances_train2017.json>       
+config.val.img_folder = <val2017-extract-folder/val2017/>           
+config.val.annotation = <coco2017labels-extract-folder/instances_val2017.json>        
+config.test.input_dir = <test2017-extract-folder/test2017/>           
+config.test.plot = True  # 可视化             
 ```
+
 - 如果是自己的数据集，那么必须要符合标准coco标注格式
 
 ## 4. 训练相关配置
@@ -62,15 +62,10 @@ config.test.plot = True  # 可视化
 
 ```python
 config.model_path = <pretrained-model-path>
-
 config.class_num = 80
-
 config.amp = False
-
 config.ema = True
-
 config.nominal_batch_factor = 4  # 在样本数量积攒至64后再进行反向更新梯度
-
 config.train.shuffle = True
 config.train.batch_size = 16
 config.train.numworkers = 8
@@ -104,13 +99,46 @@ python train.py --rank 1 --gpu 1
 
 ## 6. 测试
 
-指定要测试模型的路径，在config.py指定待测模型路径：
+- 测试相关配置
+
+```python
+config.class_num = <class_num>
+config.test.input_dir = <test-data-path>
+config.test.idx_to_cls = <class-index-to-class-name-maps>
+config.test.plot = <True or False>  # optional
+config.test.plot_dir = <path-to-save-images>  # optional
+```
+
+- 加载训练模型和EMA模型(*.pth)
 
 ```python
 config.model_path = <trained-model-path>
 ```
 
-然后运行测试脚本：
+- 加载script模型和trace模型(*.pt)     
+  确保以下开关至少开启一个：           
+  当前yolov5-1项目只支持config.script_model_dir开关，对于trace开关请谨慎使用                
+
+```python
+config.trace_model_dir = "output/trace.pt"     
+config.script_model_dir = "output/script.pt"     
+```
+
+```python
+config.jit_model_path = <trained-model-path>
+```
+
+- 加载量化模型(*.sq)    
+  确保以下开关开启：           
+  当前yolov5-1支持静态量化模型导出，但在test过程中会出现upsample错误，这个bug已经加入TODO    
+
+
+```python
+config.static_quantize_dir = "output/script.sq"     
+config.jit_model_path = <trained-model-path>
+```
+
+- 运行测试脚本：
 
 ```bash
 python3 test.py
@@ -132,6 +160,7 @@ python3 test.py
 
 ## TODO
 - 20210201 项目增加了对Yolov5S和Yolov5L的支持    
+- 修复在test过程中，静态量化模型报错问题    
 - 增加对Yolov5M的支持    
 - 增加对Yolov5x的支持    
 - 时刻跟进 https://github.com/ultralytics/yolov5

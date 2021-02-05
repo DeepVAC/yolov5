@@ -75,7 +75,6 @@ class Yolov5Test(Deepvac):
         self.test_loader = torch.utils.data.DataLoader(self.test_dataset, batch_size=1, pin_memory=False)
 
     def process(self):
-        none = 0
         for image, img, r, pads in self.test_loader:
             output = self.net(img.to(self.device))
             preds = self.postProcess(output, self.conf.test.conf_thres, self.conf.test.iou_thres)
@@ -91,15 +90,12 @@ class Yolov5Test(Deepvac):
                 classes = [self.conf.test.idx_to_cls[i] for i in preds[:, -1].long()]
 
                 print("file: {0} >>> class: {1} >>> score: {2} >>> coord: {3}".format(image, classes, scores, coords))
-            else:
-                none += 1
 
             if self.conf.test.plot:
                 preds = [classes, scores, coords] if preds.size(0) else []
                 if self.conf.test.plot_dir is None:
                     self.conf.test.plot_dir = "output/detect"
                 self.plotRectangle(image[0], preds, self.conf.test.plot_dir)
-        print(">>> none: ", none)
 
     @staticmethod
     def postProcess(output, conf_thres, iou_thres):
@@ -163,14 +159,10 @@ if __name__ == "__main__":
         config.test.plot_dir(optional)
 
         config.class_num
-        config.model_path
+        config.model_path | config.jit_model_path
         config.test.input_dir
         config.test.idx_to_cls
         first
     '''
-    config.test.input_dir = sys.argv[1]
-    config.model_path = sys.argv[2]
-    config.class_num = 4
-
     det = Yolov5Test(config)
     det()
