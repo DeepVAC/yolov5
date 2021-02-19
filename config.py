@@ -30,7 +30,7 @@ config.warmup_momentum = 0.8
 # # # model # # #
 config.device = 'cuda'
 config.img_size = 416
-config.class_num = 4
+config.class_num = 80
 config.strides = [8, 16, 32]
 # load model path
 config.model_path = "<pretrained-model-path>"
