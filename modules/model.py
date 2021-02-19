@@ -13,6 +13,7 @@ class Focus(nn.Module):
         self.conv = Conv2dBNHardswish(in_planes * 4, out_planes, kernel_size, stride, eps, momentum, padding, groups)
 
     def forward(self, x):  # x(b,c,w,h) -> y(b,4c,w/2,h/2)
+        #this is a workaround, see https://github.com/DeepVAC/yolov5/issues/5
         xcpu = x.cpu()
         xnew = torch.cat([xcpu[..., ::2, ::2], xcpu[..., 1::2, ::2], xcpu[..., ::2, 1::2], xcpu[..., 1::2, 1::2]], 1)
         return self.conv(xnew.to(x.device))
