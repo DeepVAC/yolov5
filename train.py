@@ -6,7 +6,7 @@ import torch
 import numpy as np
 
 from copy import deepcopy
-from deepvac.syszux_yolo import Yolov5L
+from modules.model import Yolov5L
 from data.dataset import Yolov5MosaicDataset
 from deepvac import LOG, Yolov5Loss, DeepvacTrain
 
