@@ -127,6 +127,7 @@ python3 test.py
 - 转换torchscript模型(*.pt)     
 
 ```python
+config.ema = False
 config.script_model_path = "output/script.pt"
 ```
   按照步骤6完成测试，torchscript模型将保存至config.script_model_path指定文件位置      
@@ -142,6 +143,7 @@ config.jit_model_path = <torchscript-model-path>
 - 转换静态模型(*.sq)     
 
 ```python
+config.ema = False
 config.static_quantize_dir = "output/script.sq"
 ```
   按照步骤6完成测试，静态量化模型将保存至config.static_quantize_dir指定文件位置      
@@ -170,7 +172,8 @@ config.jit_model_path = <static-quantize-model-path>
 
 ## 10. TODO
 - 20210201 项目增加了对Yolov5S和Yolov5L的支持    
+- 20210219 修复了torchscript模型C++推理代码在cuda上CUDNN_STATUS_INTER_ERROR问题(在modules/model.py中重写Fcous模块）     
 - 修复在test过程中，静态量化模型报错问题    
 - 增加对Yolov5M的支持    
 - 增加对Yolov5x的支持    
-- 时刻跟进 https://github.com/ultralytics/yolov5
+- 时刻同步 https://github.com/ultralytics/yolov5

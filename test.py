@@ -3,7 +3,7 @@ import torch
 import numpy as np
 
 from torchvision import ops
-from deepvac.syszux_yolo import Yolov5L
+from modules.model import Yolov5L
 from deepvac import LOG, Deepvac, OsWalkDataset
 
 
