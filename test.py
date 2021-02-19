@@ -164,11 +164,5 @@ if __name__ == "__main__":
         config.test.idx_to_cls
         first
     '''
-    config.ema = False
-    # config.model_path = "output/trained.pth"
-    config.jit_model_path = "output/script.pt"
-    config.script_model_dir = "output/script.pt"
-    config.test.input_dir = "/gemfield/hostpv/PornClsDataset/test/pornography"
-
     det = Yolov5Test(config)
     det()
