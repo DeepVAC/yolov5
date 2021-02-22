@@ -75,8 +75,13 @@ class Yolov5Test(Deepvac):
         self.test_loader = torch.utils.data.DataLoader(self.test_dataset, batch_size=1, pin_memory=False)
 
     def process(self):
+        half = self.device.type == "cuda"
+        if half:
+            self.net = self.net.half() 
         for image, img, r, pads in self.test_loader:
-            output = self.net(img.to(self.device))
+            if half:
+                img = img.to(self.device).half()
+            output = self.net(img)
             preds = self.postProcess(output, self.conf.test.conf_thres, self.conf.test.iou_thres)
             if preds.size(0):
                 coords = preds[:, :4]
@@ -149,7 +154,6 @@ class Yolov5Test(Deepvac):
 
 if __name__ == "__main__":
     import os
-    import sys
 
     from config import config
     '''
@@ -164,5 +168,6 @@ if __name__ == "__main__":
         config.test.idx_to_cls
         first
     '''
+
     det = Yolov5Test(config)
     det()
