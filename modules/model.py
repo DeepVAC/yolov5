@@ -2,8 +2,6 @@ import torch
 
 from torch import nn, Tensor
 from typing import List, Tuple
-import sys
-sys.path.append("/home/liyang/GitHub/deepvac")
 from deepvac.syszux_modules import Conv2dBnAct, BottleneckC3, SPP, Concat
 
 
