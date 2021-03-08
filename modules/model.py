@@ -157,11 +157,11 @@ class Yolov5S(nn.Module):
         self.block4 = self.buildBlock(cfgs)
 
     def initBlock5(self):
-        self.csp1 = self.buildBlock([[BottleneckC3, [256, 128, 3, False]],])
+        self.csp1 = self.buildBlock([[BottleneckC3, [256, 128, 1, False]],])
         self.conv1 = self.buildBlock([[Conv2dBnAct, [128, 128, 3, 2]],])
-        self.csp2 = self.buildBlock([[BottleneckC3, [256, 256, 3, False]],])
+        self.csp2 = self.buildBlock([[BottleneckC3, [256, 256, 1, False]],])
         self.conv2 = self.buildBlock([[Conv2dBnAct, [256, 256, 3, 2]],])
-        self.csp3 = self.buildBlock([[BottleneckC3, [512, 512, 3, False]],])
+        self.csp3 = self.buildBlock([[BottleneckC3, [512, 512, 1, False]],])
 
     def initDetect(self):
         #initial anchors
