@@ -1,9 +1,11 @@
 import cv2
+import math
 import torch
 import numpy as np
 
 from torchvision import ops
 from modules.model import Yolov5L
+from torch.nn import functional as F
 from deepvac import LOG, Deepvac, OsWalkDataset
 
 
@@ -75,8 +77,24 @@ class Yolov5Test(Deepvac):
         self.test_loader = torch.utils.data.DataLoader(self.test_dataset, batch_size=1, pin_memory=False)
 
     def process(self):
+        # found half bug, if turn on, will detect None
+        # half = self.device.type == "cuda"
+        half = False
+        # half net parameters
+        if half:
+            self.net = self.net.half()
+
         for image, img, r, pads in self.test_loader:
-            output = self.net(img.to(self.device))
+            img = img.to(self.device)
+            # half img inputs
+            if half:
+                img = img.half()
+            # predict augment
+            if self.conf.test.augment:
+                output = self.augProcess(img)
+            else:
+                output = self.net(img)
+            # post process
             preds = self.postProcess(output, self.conf.test.conf_thres, self.conf.test.iou_thres)
             if preds.size(0):
                 coords = preds[:, :4]
@@ -96,6 +114,33 @@ class Yolov5Test(Deepvac):
                 if self.conf.test.plot_dir is None:
                     self.conf.test.plot_dir = "output/detect"
                 self.plotRectangle(image[0], preds, self.conf.test.plot_dir)
+
+    def augProcess(self, img):
+        h, w = img.shape[-2:]
+
+        y = []
+        for r, p in zip(self.conf.test.radios, self.conf.test.flip_p):
+            x = self.scaleImg(img.flip(p) if p else img, r, gs=max(self.conf.strides))
+            yi = self.net(x)
+            yi[..., :4] /= r
+            if p == 2:
+                yi[..., 1] = h - yi[..., 1]
+            elif p == 3:
+                yi[..., 0] = w - yi[..., 0]
+            y.append(yi)
+        return torch.cat(y, 1)
+
+    @staticmethod
+    def scaleImg(img, ratio=1.0, same_shape=False, gs=32):
+        if ratio == 1.0:
+            return img
+        else:
+            h, w = img.shape[2:]
+            s = (int(h * ratio), int(w * ratio))
+            img = F.interpolate(img, size=s, mode='bilinear', align_corners=False)
+            if not same_shape:
+                h, w = [math.ceil(x * ratio / gs) * gs for x in (h, w)]
+        return F.pad(img, [0, w - s[1], 0, h - s[0]], value=0.447)
 
     @staticmethod
     def postProcess(output, conf_thres, iou_thres):
@@ -164,5 +209,6 @@ if __name__ == "__main__":
         config.test.idx_to_cls
         first
     '''
+
     det = Yolov5Test(config)
     det()

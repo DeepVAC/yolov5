@@ -85,6 +85,12 @@ config.val.annotation = "data/coco/instances_val2017.json"
 # # # test # # #
 config.test.plot = False
 config.test.plot_dir = "output/detect"
+
+config.test.augment = False
+config.test.radios = [1, 0.83, 0.67]
+# None: no flip  1: cflip  2: wflip  3: hhlip
+config.test.flip_p = [None, 3, None]
+
 config.test.iou_thres = 0.45
 config.test.conf_thres = 0.25
 config.test.input_dir = "data/coco/images/test2017"
