@@ -194,7 +194,6 @@ class Yolov5Test(Deepvac):
 
 if __name__ == "__main__":
     import os
-    import sys
 
     from config import config
     '''
