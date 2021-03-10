@@ -49,7 +49,7 @@ class Yolov5MosaicDataset(CocoCVDataset):
             padh = y1a - y1b
             # build label
             cls, det, _ = self.loadAnns(index)
-            label = np.hstack((cls.reshape(-1, 1), det)) if cls.size else np.empty((0, 5))
+            label = np.hstack((cls.reshape(-1, 1), det)) if det.size else np.empty((0, 5))
             if label.size:
                 label[:, 3] = wr * (label[:, 1] + label[:, 3]) + padw
                 label[:, 4] = hr * (label[:, 2] + label[:, 4]) + padh
@@ -67,6 +67,7 @@ class Yolov5MosaicDataset(CocoCVDataset):
          img = img[:, :, ::-1].transpose(2, 0, 1)
          img = np.ascontiguousarray(img)
          img = torch.from_numpy(img)
+         img = img.float() / 255.
          # label
          label_out = torch.zeros(len(label), 6)
          label_out[:, 1:] = torch.from_numpy(label)

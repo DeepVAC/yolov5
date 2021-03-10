@@ -1,11 +1,8 @@
-import cv2
-import math
 import torch
 import numpy as np
 
-from torchvision import ops
+from utils import *
 from modules.model import Yolov5L
-from torch.nn import functional as F
 from deepvac import LOG, Deepvac, OsWalkDataset
 
 
@@ -19,7 +16,7 @@ class Yolov5TestDataset(OsWalkDataset):
         img = cv2.imread(image, 1)
         h0, w0, _ = img.shape
 
-        img = self.letterBox(img, self.conf.img_size)
+        img = letterBox(img, self.conf.img_size)
         h, w, _ = img.shape
 
         r = min(h / h0, w / w0)
@@ -30,36 +27,6 @@ class Yolov5TestDataset(OsWalkDataset):
         img = torch.from_numpy(img)
         img = img.float() / 255.
         return image, img, r, pads
-
-    @staticmethod
-    def letterBox(img, img_size, color=(114, 114, 114), auto=True, scaleFill=False, scaleup=True):
-        shape = img.shape[:2]
-        if isinstance(img_size, int):
-            new_shape = (img_size, img_size)
-
-        r = min(new_shape[0] / shape[0], new_shape[1] / shape[1])
-        if not scaleup:
-            r = min(r, 1.0)
-        ratio = r, r
-
-        new_unpad = int(round(shape[1] * r)), int(round(shape[0] * r))
-        dw, dh = new_shape[1] - new_unpad[0], new_shape[0] - new_unpad[1]
-        if auto:
-            dw, dh = np.mod(dw, 32), np.mod(dh, 32)
-        elif scaleFill:
-            dw, dh = 0.0, 0.0
-            new_unpad = (new_shape[1], new_shape[0])
-            ratio = new_shape[1] / shape[1], new_shape[0] / shape[0]
-        dw /= 2
-        dh /= 2
-
-        if shape[::-1] != new_unpad:  # resize
-            img = cv2.resize(img, new_unpad, interpolation=cv2.INTER_LINEAR)
-
-        top, bottom = int(round(dh - 0.1)), int(round(dh + 0.1))
-        left, right = int(round(dw - 0.1)), int(round(dw + 0.1))
-        img = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=color)
-        return img
 
 
 class Yolov5Test(Deepvac):
@@ -84,8 +51,10 @@ class Yolov5Test(Deepvac):
         if half:
             self.net = self.net.half()
 
-        for image, img, r, pads in self.test_loader:
+        for image, img, r, pad in self.test_loader:
+            r = r.to(self.device)
             img = img.to(self.device)
+            pad = [i.to(self.device) for i in pad]
             # half img inputs
             if half:
                 img = img.half()
@@ -95,16 +64,10 @@ class Yolov5Test(Deepvac):
             else:
                 output = self.net(img)
             # post process
-            preds = self.postProcess(output, self.conf.test.conf_thres, self.conf.test.iou_thres)
+            preds = postProcess(output, self.conf.test.conf_thres, self.conf.test.iou_thres)
             if preds.size(0):
-                coords = preds[:, :4]
-                coords[:, [0, 2]] -= pads[0].to(self.device)
-                coords[:, [1, 3]] -= pads[1].to(self.device)
-                coords /= r.to(self.device)
-                coords = coords.long().tolist()
-
+                coords = restoreCoords(img, preds[:, :4], ratio_pad=(r, pad)).long().tolist()
                 scores = [i.item() for i in preds[:, -2]]
-
                 classes = [self.conf.test.idx_to_cls[i] for i in preds[:, -1].long()]
 
                 print("file: {0} >>> class: {1} >>> score: {2} >>> coord: {3}".format(image, classes, scores, coords))
@@ -113,14 +76,14 @@ class Yolov5Test(Deepvac):
                 preds = [classes, scores, coords] if preds.size(0) else []
                 if self.conf.test.plot_dir is None:
                     self.conf.test.plot_dir = "output/detect"
-                self.plotRectangle(image[0], preds, self.conf.test.plot_dir)
+                plotRectangle(image[0], preds, self.conf.test.plot_dir)
 
     def augProcess(self, img):
         h, w = img.shape[-2:]
 
         y = []
         for r, p in zip(self.conf.test.radios, self.conf.test.flip_p):
-            x = self.scaleImg(img.flip(p) if p else img, r, gs=max(self.conf.strides))
+            x = scaleImg(img.flip(p) if p else img, r, gs=max(self.conf.strides))
             yi = self.net(x)
             yi[..., :4] /= r
             if p == 2:
@@ -129,67 +92,6 @@ class Yolov5Test(Deepvac):
                 yi[..., 0] = w - yi[..., 0]
             y.append(yi)
         return torch.cat(y, 1)
-
-    @staticmethod
-    def scaleImg(img, ratio=1.0, same_shape=False, gs=32):
-        if ratio == 1.0:
-            return img
-        else:
-            h, w = img.shape[2:]
-            s = (int(h * ratio), int(w * ratio))
-            img = F.interpolate(img, size=s, mode='bilinear', align_corners=False)
-            if not same_shape:
-                h, w = [math.ceil(x * ratio / gs) * gs for x in (h, w)]
-        return F.pad(img, [0, w - s[1], 0, h - s[0]], value=0.447)
-
-    @staticmethod
-    def postProcess(output, conf_thres, iou_thres):
-        '''
-            preds: [x1, y1, w, h, confi, one-hot * num_classes]
-            return: [x1, y1, x2, y2, confi, cls)
-        '''
-        preds = output[output[..., 4] > conf_thres]  # filter with classifier confidence
-        if not preds.shape[0]:
-            return torch.zeros((0, 6))
-        # Compute conf
-        preds[:, 5:] *= preds[:, 4:5]  # conf = obj_conf * cls_conf
-        # Box (center x, center y, width, height) to (x1, y1, x2, y2)
-        preds[:, 0] = preds[:, 0] - preds[:, 2] / 2.0
-        preds[:, 1] = preds[:, 1] - preds[:, 3] / 2.0
-        preds[:, 2] += preds[:, 0]
-        preds[:, 3] += preds[:, 1]
-        # Detections matrix nx6 (xyxy, conf, cls)
-        conf, idx = preds[:, 5:].max(dim=1, keepdim=True)
-        preds = torch.cat((preds[:, :4], conf, idx), dim=1)[conf.view(-1) > conf_thres]  # filter with bbox confidence
-        if not preds.size(0):
-            return torch.zeros((0, 6))
-        # nms on per class
-        max_side = 4096
-        class_offset = preds[:, 5:6] * max_side
-        boxes, scores = preds[:, :4] + class_offset, preds[:, 4]
-        idxs = ops.nms(boxes, scores, iou_thres)
-        preds = torch.stack([preds[i] for i in idxs], dim=0)
-        return preds
-
-    @staticmethod
-    def plotRectangle(image, preds, save_dir):
-        file_name = image.split('/')[-1]
-        if not os.path.exists(save_dir):
-            os.makedirs(save_dir)
-        new_image = os.path.join(save_dir, file_name)
-
-        image = cv2.imread(image)
-
-        if not preds:
-            cv2.imwrite(new_image, image)
-            return
-
-        for cls, score, coord in zip(*preds):
-            if (max(coord) > max(image.shape)) or min(coord) < 0:
-                continue
-            cv2.rectangle(image, (coord[0], coord[1]), (coord[2], coord[3]), (0, 0, 255), 2)
-            cv2.putText(image, "{0}-{1:.2f}".format(cls, score), tuple(coord[:2]), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,0), 3)
-            cv2.imwrite(new_image, image)
 
 
 if __name__ == "__main__":

@@ -6,6 +6,8 @@ from deepvac import config
 
 
 # # # config # # #
+config.report = True
+config.ds_name = " "
 config.disable_git = True
 
 # # # training # # #
