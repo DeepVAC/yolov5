@@ -1,19 +1,19 @@
 #! /usr/bin/python3
 # -*- coding:utf-8 -*-
-import os
-import math
 import torch
 import numpy as np
 
-from copy import deepcopy
+from utils import *
 from modules.model import Yolov5L
 from data.dataset import Yolov5MosaicDataset
-from deepvac import LOG, Yolov5Loss, DeepvacTrain
+from deepvac import LOG, Yolov5Loss, DeepvacTrain, ClassifierReport
 
 
 class DeepvacYolov5Train(DeepvacTrain):
     def __init__(self, config):
         super(DeepvacYolov5Train, self).__init__(config)
+        if self.conf.report:
+            self.report = ClassifierReport(ds_name=self.conf.ds_name, cls_num=self.conf.class_num)
 
     def auditConfig(self):
         super(DeepvacYolov5Train, self).auditConfig()
@@ -74,7 +74,23 @@ class DeepvacYolov5Train(DeepvacTrain):
         self.addScalar('{}/boxLoss'.format(self.phase), loss_items[0], self.epoch)
         self.addScalar('{}/objLoss'.format(self.phase), loss_items[1], self.epoch)
         self.addScalar('{}/clsLoss'.format(self.phase), loss_items[2], self.epoch)
+
+        if self.is_train or (not self.conf.report):
+            return
+        preds = [postProcess(i, self.conf.test.conf_thres, self.conf.test.iou_thres) for i in self.output]
+        res = metrics(self.sample, preds, self.target, 0.7)
+        if not res:
+            return
+        for gt, pred in res:
+            self.report.add(gt, pred)
+
+    def postEpoch(self):
         self.accuracy = 0
+        if self.is_train or (not self.conf.report):
+            return
+        self.report()
+        self.accuracy = self.report.accuracy
+        self.report.reset()
 
 
 if __name__ == '__main__':

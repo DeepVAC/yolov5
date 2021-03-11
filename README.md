@@ -6,9 +6,9 @@ DeepVAC-compliant Yolov5 implementation
 
 **项目依赖**
 
-- deepvac >= 0.2.6
+- deepvac >= 0.3.6
 - pytorch >= 1.8.0
-- torchvision >= 0.7.0
+- torchvision >= 0.8.0
 
 # 如何运行本项目
 
@@ -46,6 +46,7 @@ config.val.img_folder = <val2017-extract-folder/val2017/>
 config.val.annotation = <coco2017labels-extract-folder/instances_val2017.json>        
 config.test.input_dir = <test2017-extract-folder/test2017/>           
 config.test.plot = True  # 可视化             
+config.test.augment = True  # 推理过程增强
 ```
 
 - 如果是自己的数据集，那么必须要符合标准coco标注格式
@@ -53,7 +54,7 @@ config.test.plot = True  # 可视化
 ## 4. 训练相关配置
 
 - 指定预训练模型路径(config.model_path)       
-[yolov5s & yolov5l](https://pan.baidu.com/share/init?surl=oA4uZUlWUtEq2dOMlBZ8hg) 提取码: g4tu
+[yolov5](https://pan.baidu.com/share/init?surl=oA4uZUlWUtEq2dOMlBZ8hg) 提取码: g4tu
 - 指定训练分类数量(config.class_num)    
 - 是否采用混合精度训练(config.amp)     
 - 是否采用ema策略(config.ema)      
@@ -105,11 +106,14 @@ python train.py --rank 1 --gpu 1
 config.class_num = <class_num>
 config.test.input_dir = <test-data-path>
 config.test.idx_to_cls = <class-index-to-class-name-maps>
+config.test.augment = <True or False>  # optional
+config.test.radios = <list>  # optional
+config.test.flip_p = <list>  # optional
 config.test.plot = <True or False>  # optional
 config.test.plot_dir = <path-to-save-images>  # optional
 ```
 
-- 加载模型(*.pth)
+- 加载模型(\*.pth)
 
 ```python
 config.model_path = <trained-model-path>
@@ -124,7 +128,7 @@ python3 test.py
 
 ## 7. 使用torchscript模型
 如果训练过程中未开启config.script_model_path开关，可以在测试过程中转化torchscript模型     
-- 转换torchscript模型(*.pt)     
+- 转换torchscript模型(\*.pt)     
 
 ```python
 config.ema = False
@@ -140,7 +144,7 @@ config.jit_model_path = <torchscript-model-path>
 
 ## 8. 使用静态量化模型
 如果训练过程中未开启config.static_quantize_dir开关，可以在测试过程中转化静态量化模型     
-- 转换静态模型(*.sq)     
+- 转换静态模型(\*.sq)     
 
 ```python
 config.ema = False
@@ -171,9 +175,5 @@ config.jit_model_path = <static-quantize-model-path>
 请参考[DeepVAC](https://github.com/DeepVAC/deepvac)
 
 ## 10. TODO
-- 20210201 项目增加了对Yolov5S和Yolov5L的支持    
-- 20210219 修复了torchscript模型C++推理代码在cuda上CUDNN_STATUS_INTER_ERROR问题(在modules/model.py中重写Fcous模块）     
 - 修复在test过程中，静态量化模型报错问题    
-- 增加对Yolov5M的支持    
-- 增加对Yolov5x的支持    
 - 时刻同步 https://github.com/ultralytics/yolov5
