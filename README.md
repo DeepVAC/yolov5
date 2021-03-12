@@ -177,3 +177,15 @@ config.jit_model_path = <static-quantize-model-path>
 - 增加对Yolov5M的支持    
 - 增加对Yolov5x的支持    
 - 时刻同步 https://github.com/ultralytics/yolov5
+
+## 11. DeepVAC REPORT SOTA指标
+| dataset | total | 漏检数量 | 
+| ------- | ----- | --- |
+| porn_detect | 302 | 9 |
+
+## 12. 模型文件
+| 模型 | 版本 | Mlab路径 | 大小 | md5 |
+| ---- | ---- | -------- | ---- | --- |
+| pt模型 | v1.0 | /opt/private/deepvac_vision/models/porn_detect/script.pt | 181M | 7ec707be54c1d6d5a61593303e4acc43 |
+| pth模型 | v1.0 | /opt/private/deepvac_vision/models/porn_detect/trained.pth | 181M | 6e1daa24d564a22bc2e57fc60df85b7e |
+| 预训练模型 | v1.0 | 参考条目4 | 181M | 1df6f9dddc52d517a83cc8742c06c4a4 |
