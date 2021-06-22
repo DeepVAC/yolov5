@@ -25,13 +25,13 @@ class Yolov5Loss(LossBase):
             setattr(self, k, getattr(det, k))
 
     def auditConfig(self):
-        self.gr = 1.0
-        self.anchor_t = 4
-        self.cls_pw = 1.0
-        self.obj_pw = 1.0
-        self.fl_gamma = 0.0
-        self.autobalance = False
-        self.balance = [4.0, 1.0, 0.4]
+        self.gr          = self.addUserConfig('gr', self.config.gr, 1.0)
+        self.anchor_t    = self.addUserConfig('anchor_t', self.config.anchor_t, 4)
+        self.cls_pw      = self.addUserConfig('cls_pw', self.config.cls_pw, 1.0)
+        self.obj_pw      = self.addUserConfig('obj_pw', self.config.obj_pw, 1.0)
+        self.fl_gamma    = self.addUserConfig('fl_gamma', self.config.fl_gamma, 0.0)
+        self.autobalance = self.addUserConfig('autobalance', self.config.autobalance, False)
+        self.balance     = self.addUserConfig('balance', self.config.balance, [4.0, 1.0, 0.4])
         self.cp, self.cn = self.smoothBCE(eps=0.0)
 
     def build_target(self, pred, target):

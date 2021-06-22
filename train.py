@@ -6,9 +6,6 @@ from deepvac import LOG, DeepvacTrain
 
 
 class Yolov5Train(DeepvacTrain):
-    def __init__(self, config):
-        super(DeepvacYolov5Train, self).__init__(config)
-
     def preIter(self):
         if not self.config.is_train:
             return

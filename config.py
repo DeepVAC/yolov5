@@ -9,11 +9,11 @@ import torch
 from torchvision import transforms
 
 # import third:  libs in your program
-from deepvac import AttrDict, is_ddp, new
+from deepvac import AttrDict, new
 from deepvac.aug.yolo_aug import *
 from aug.aug import Yolov5TrainComposer, Yolov5ValComposer
 from data.datasets import Yolov5MosaicDataset, Yolov5Dataset
-import modules
+from modules import Yolov5S, Yolov5L, Yolov5Loss
 
 
 ################################################################################
@@ -41,7 +41,7 @@ config.core.Yolov5Train.batch_size = 16
 config.core.Yolov5Train.num_workers = 8
 config.core.Yolov5Train.pin_memory = True
 config.core.Yolov5Train.nominal_batch_factor = 4
-#-# config.core.Yolov5Train.model_path = "output/trained.pth"
+config.core.Yolov5Train.model_path = "output/trained.pth"
 # load script and quantize model path
 # config.core.Yolov5Train.jit_model_path = "<pretrained-model-path>"
 
@@ -56,8 +56,7 @@ config.core.Yolov5Train.nominal_batch_factor = 4
 # config.cast.TraceCast.dynamic_quantize_dir = "./quantize.sq"
 
 ### ---------------------------------- dataset ---------------------------------
-#-# config.core.Yolov5Train.img_size = 416
-config.core.Yolov5Train.img_size = 640
+config.core.Yolov5Train.img_size = 416
 config.core.Yolov5Train.border = [-config.core.Yolov5Train.img_size / 2] * 2
 
 config.aug.HSVAug = AttrDict()
@@ -98,7 +97,7 @@ config.core.Yolov5Train.val_loader = torch.utils.data.DataLoader(config.core.Yol
 ### ---------------------------------- model -----------------------------------
 config.core.Yolov5Train.strides = [8, 16, 32]
 # support model include (Yolov5S, Yolov5L) now
-config.core.Yolov5Train.net = modules.Yolov5S(config.core.Yolov5Train.class_num, config.core.Yolov5Train.strides)
+config.core.Yolov5Train.net = Yolov5S(config.core.Yolov5Train.class_num, config.core.Yolov5Train.strides)
 
 ### ---------------------------------- optimizer -------------------------------
 config.core.Yolov5Train.lr = 0.01
@@ -123,11 +122,11 @@ config.core.Yolov5Train.warmup_iter = max(3 * len(config.core.Yolov5Train.train_
 cls_scale = 0.5 * config.core.Yolov5Train.class_num / 80
 box_scale = 0.05
 obj_scale = 1.0
-config.core.Yolov5Train.criterion = modules.Yolov5Loss(config, config.core.Yolov5Train.net.detect, cls_scale, box_scale, obj_scale, config.core.Yolov5Train.strides, config.core.Yolov5Train.device)
+config.core.Yolov5Train.criterion = Yolov5Loss(config, config.core.Yolov5Train.net.detect, cls_scale, box_scale, obj_scale, config.core.Yolov5Train.strides, config.core.Yolov5Train.device)
 
 
 ################################################################################
-### TRAIN
+### TEST
 ################################################################################
 config_test = new("Yolov5Test")
 ### ---------------------------------- test ------------------------------------
@@ -137,8 +136,10 @@ config_test.core.Yolov5Test.img_size = 640
 config_test.core.Yolov5Test.strides = [8, 16, 32]
 config_test.core.Yolov5Test.model_reinterpret_cast = True
 config_test.core.Yolov5Test.cast_state_dict_strict = True
-config_test.core.Yolov5Test.net = modules.Yolov5S(config_test.core.Yolov5Test.class_num, config_test.core.Yolov5Test.strides)
+config_test.core.Yolov5Test.net = Yolov5S(config_test.core.Yolov5Test.class_num, config_test.core.Yolov5Test.strides)
 
+config_test.core.Yolov5Test.model_path = "output/trained.pth"
+config_test.core.Yolov5Test.test_sample_path = "your test sample path"
 config_test.core.Yolov5Test.half = False
 config_test.core.Yolov5Test.show_output_dir = "output/show"
 config_test.core.Yolov5Test.iou_thres = 0.45
