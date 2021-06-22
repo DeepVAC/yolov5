@@ -2,15 +2,15 @@ import torch
 
 from torch import nn, Tensor
 from typing import List, Tuple
-from deepvac.syszux_modules import Conv2dBNHardswish, BottleneckStd, BottleneckCSP, SPP, Focus, Concat
+from deepvac.backbones import Conv2dBNHardswish, BottleneckStd, BottleneckCSP, SPP, Focus, Concat
 
 
 # to run script.pt on cuda in C++, you need to rewrite Focus
 class Focus(nn.Module):
     # Focus wh information into c-space
-    def __init__(self, in_planes, out_planes, kernel_size=1, stride=1, eps=1e-5, momentum=0.1, padding=None, groups=1):
+    def __init__(self, in_planes, out_planes, kernel_size=1, stride=1, padding=None, groups=1):
         super(Focus, self).__init__()
-        self.conv = Conv2dBNHardswish(in_planes * 4, out_planes, kernel_size, stride, eps, momentum, padding, groups)
+        self.conv = Conv2dBNHardswish(in_planes * 4, out_planes, kernel_size, stride, padding, groups)
 
     def forward(self, x):  # x(b,c,w,h) -> y(b,4c,w/2,h/2)
         #this is a workaround, see https://github.com/DeepVAC/yolov5/issues/5
@@ -64,8 +64,6 @@ class Yolov5S(nn.Module):
     '''
         yolov5s
     '''
-    #     eps   momentum
-    bn = [1e-3, 0.03]
     def __init__(self, class_num=80, strides=[8, 16, 32]):
         super(Yolov5S, self).__init__()
         self.class_num = class_num
@@ -77,13 +75,14 @@ class Yolov5S(nn.Module):
         self.initBlock4()
         self.initBlock5()
         self.initDetect()
+        self.initBNParam()
         self.detect.strides = torch.Tensor(strides)
+        self.initParamGroup()
 
     def buildBlock(self, cfgs):
         layers = []
         #init the 4 layers
         for m, args in cfgs:
-            args += self.bn
             layers.append(m(*args))
         return nn.Sequential(*layers)
 
@@ -157,6 +156,24 @@ class Yolov5S(nn.Module):
     def initDetect(self):
         #initial anchors
         self.detect = Detect(self.class_num, [[10, 13, 16, 30, 33, 23], [30, 61, 62, 45, 59, 119], [116, 90, 156, 198, 373, 326]], [128, 256, 512])
+
+    def initBNParam(self):
+        for m in self.modules():
+            if isinstance(m, nn.BatchNorm2d):
+                m.eps = 0.001
+                m.momentum = 0.01
+
+    def initParamGroup(self):
+        self.pg0 = []
+        self.pg1 = []
+        self.pg2 = []
+        for k, v in self.named_modules():
+            if hasattr(v, 'bias') and isinstance(v.bias, nn.Parameter):
+                self.pg2.append(v.bias)  # biases
+            if isinstance(v, nn.BatchNorm2d):
+                self.pg0.append(v.weight)  # no decay
+            elif hasattr(v, 'weight') and isinstance(v.weight, nn.Parameter):
+                self.pg1.append(v.weight)  # apply decay
 
 
 class Yolov5L(Yolov5S):
