@@ -128,20 +128,20 @@ config.core.Yolov5Train.criterion = Yolov5Loss(config, config.core.Yolov5Train.n
 ################################################################################
 ### TEST
 ################################################################################
-config_test = new("Yolov5Test")
+config.core.Yolov5Test = AttrDict()
 ### ---------------------------------- test ------------------------------------
-config_test.core.Yolov5Test.device = "cuda"
-config_test.core.Yolov5Test.class_num = 80
-config_test.core.Yolov5Test.img_size = 640
-config_test.core.Yolov5Test.strides = [8, 16, 32]
-config_test.core.Yolov5Test.model_reinterpret_cast = True
-config_test.core.Yolov5Test.cast_state_dict_strict = True
-config_test.core.Yolov5Test.net = Yolov5S(config_test.core.Yolov5Test.class_num, config_test.core.Yolov5Test.strides)
+config.core.Yolov5Test.device = "cuda"
+config.core.Yolov5Test.class_num = 80
+config.core.Yolov5Test.img_size = 640
+config.core.Yolov5Test.strides = [8, 16, 32]
+config.core.Yolov5Test.model_reinterpret_cast = True
+config.core.Yolov5Test.cast_state_dict_strict = True
+config.core.Yolov5Test.net = Yolov5S(config.core.Yolov5Test.class_num, config.core.Yolov5Test.strides)
 
-config_test.core.Yolov5Test.model_path = "output/trained.pth"
-config_test.core.Yolov5Test.test_sample_path = "your test sample path"
-config_test.core.Yolov5Test.half = False
-config_test.core.Yolov5Test.show_output_dir = "output/show"
-config_test.core.Yolov5Test.iou_thres = 0.45
-config_test.core.Yolov5Test.conf_thres = 0.25
-config_test.core.Yolov5Test.idx2cat = ["cls{}".format(i) for i in range(config_test.core.Yolov5Test.class_num)]
+config.core.Yolov5Test.model_path = "output/trained.pth"
+config.core.Yolov5Test.test_sample_path = "your test sample path"
+config.core.Yolov5Test.half = False
+config.core.Yolov5Test.show_output_dir = "output/show"
+config.core.Yolov5Test.iou_thres = 0.45
+config.core.Yolov5Test.conf_thres = 0.25
+config.core.Yolov5Test.idx2cat = ["cls{}".format(i) for i in range(config.core.Yolov5Test.class_num)]

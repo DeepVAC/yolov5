@@ -6,7 +6,7 @@ DeepVAC-compliant Yolov5 implementation
 
 **项目依赖**
 
-- deepvac >= 0.5.7
+- deepvac >= 0.6.0
 - pytorch >= 1.9.0
 - torchvision >= 0.10.0
 
@@ -40,6 +40,7 @@ rm coco2017labels.zip
 在config.py文件中作如下配置：     
 
 ```python
+from deepvac.core import AttrDict, new
 # new("your train class name")
 config = new("Yolov5Train")
 # train dataset
@@ -51,8 +52,8 @@ val_sample_path = "data/coco/images/val2017"
 val_target_path = "data/coco/instances_val2017.json"
 config.core.Yolov5Train.val_dataset = Yolov5Dataset(config, val_sample_path, val_target_path, config.core.Yolov5Train.img_size)
 # test dataset
-config_test = new("Yolov5Test")
-config_test.core.Yolov5Test.test_sample_path = "your test images dir"
+config.core.Yolov5Test = AttrDict()
+config.core.Yolov5Test.test_sample_path = "your test images dir"
 ```
 
 - 如果是自己的数据集，那么必须要符合标准coco标注格式
@@ -94,57 +95,57 @@ python3 train.py
 - 测试相关配置
 
 ```python
-config_test.core.Yolov5Test.device = "cuda"
-config_test.core.Yolov5Test.class_num = 80
-config_test.core.Yolov5Test.img_size = 640
-config_test.core.Yolov5Test.half = False
-config_test.core.Yolov5Test.show_output_dir = "output/show"
-config_test.core.Yolov5Test.iou_thres = 0.45
-config_test.core.Yolov5Test.conf_thres = 0.25
-config_test.core.Yolov5Test.idx2cat = ["cls{}".format(i) for i in range(config_test.core.Yolov5Test.class_num)]
+config.core.Yolov5Test.device = "cuda"
+config.core.Yolov5Test.class_num = 80
+config.core.Yolov5Test.img_size = 640
+config.core.Yolov5Test.half = False
+config.core.Yolov5Test.show_output_dir = "output/show"
+config.core.Yolov5Test.iou_thres = 0.45
+config.core.Yolov5Test.conf_thres = 0.25
+config.core.Yolov5Test.idx2cat = ["cls{}".format(i) for i in range(config.core.Yolov5Test.class_num)]
 ```
 
 - 运行测试脚本：
 
 ```bash
 # 方法1
-config_test.core.Yolov5Test.model_path = <trained-model>
-config_test.core.Yolov5Test.test_sample_path = <test-sample-path>
+config.core.Yolov5Test.model_path = <trained-model>
+config.core.Yolov5Test.test_sample_path = <test-sample-path>
 python3 test.py
 # 方法2
 python3 test.py <trained-model(required)> <test-sample-path(required)> <label-path(optional)>
 ```
 
 ## 7. 使用torchscript模型
-如果训练过程中未开启config_test.core.Yolov5Test.script_model_path开关，可以在测试过程中转化torchscript模型     
+如果训练过程中未开启config.core.Yolov5Test.script_model_path开关，可以在测试过程中转化torchscript模型     
 - 转换torchscript模型(*.pt)     
 
 ```python
-config_test.core.Yolov5Test.ema = False
-config_test.core.Yolov5Test.script_model_path = "output/script.pt"
+config.core.Yolov5Test.ema = False
+config.core.Yolov5Test.script_model_path = "output/script.pt"
 ```
-  按照步骤6完成测试，torchscript模型将保存至config_test.core.Yolov5Test.script_model_path指定文件位置      
+  按照步骤6完成测试，torchscript模型将保存至config.core.Yolov5Test.script_model_path指定文件位置      
 
 - 加载torchscript模型
 
 ```python
-config_test.core.Yolov5Test.jit_model_path = <torchscript-model-path>
+config.core.Yolov5Test.jit_model_path = <torchscript-model-path>
 ```
 
 ## 8. 使用静态量化模型
-如果训练过程中未开启config_test.core.Yolov5Test.static_quantize_dir开关，可以在测试过程中转化静态量化模型     
+如果训练过程中未开启config.core.Yolov5Test.static_quantize_dir开关，可以在测试过程中转化静态量化模型     
 - 转换静态模型(*.sq)     
 
 ```python
-config_test.core.Yolov5Test.ema = False
-config_test.core.Yolov5Test.static_quantize_dir = "output/script.sq"
+config.core.Yolov5Test.ema = False
+config.core.Yolov5Test.static_quantize_dir = "output/script.sq"
 ```
-  按照步骤6完成测试，静态量化模型将保存至config_test.core.Yolov5Test.static_quantize_dir指定文件位置      
+  按照步骤6完成测试，静态量化模型将保存至config.core.Yolov5Test.static_quantize_dir指定文件位置      
 
 - 加载静态量化模型
 
 ```python
-config_test.core.Yolov5Test.jit_model_path = <static-quantize-model-path>
+config.core.Yolov5Test.jit_model_path = <static-quantize-model-path>
 ```
 当前yolov5-1支持静态量化模型导出，但在test过程中会出现upsample错误，我们推测是pytorch bug导致了这个问题，目前这个bug已经加入TODO    
 
