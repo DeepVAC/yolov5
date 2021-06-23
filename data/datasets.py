@@ -55,6 +55,13 @@ class Yolov5MosaicDataset(CocoCVDataset):
         label4 = np.concatenate(label4, 0)
         if label4.size:
             np.clip(label4[:, 1:], 0, 2 * self.img_size, out=label4[:, 1:])
+
+        # mixup or not
+        if self.config.mixup:
+            [img_mix, label_mix], _ = self._getSample(random.randint(0, self.__len__() - 1))
+            r = np.random.beta(32.0, 32.0)
+            img4 = (img4 * r + img_mix * (1 - r)).astype(np.uint8)
+            label4 = np.concatenate((label4, label_mix), 0)
         # for transform or composer
         return [img4, label4], None
 
@@ -76,6 +83,32 @@ class Yolov5MosaicDataset(CocoCVDataset):
         for i, l in enumerate(label):
             l[:, 0] = i
         return torch.stack(img, 0), torch.cat(label, 0)
+
+    @staticmethod
+    def collate_fn4(batch):
+        img, label = zip(*batch)
+        n = len(img) // 4  # batch
+        img4, label4 = [], []
+
+        ho = torch.tensor([[0., 0, 0, 1, 0, 0]])
+        wo = torch.tensor([[0., 0, 1, 0, 0, 0]])
+        s = torch.tensor([[1, 1, .5, .5, .5, .5]])
+
+        for i in range(n):
+            i *= 4
+            if random.random() < 0.5:
+                im = F.interpolate(img[i].unsqueeze(0).float(), scale_factor=2., mode='bilinear', align_corners=False)[0].type(img[i].type())
+                # ratio auto fit to scale
+                l = label[i]
+            else:
+                im = torch.cat((torch.cat((img[i], img[i + 1]), 1), torch.cat((img[i + 2], img[i + 3]), 1)), 2)
+                l = torch.cat((label[i], label[i + 1] + ho, label[i + 2] + wo, label[i + 3] + ho + wo), 0) * s
+            img4.append(im)
+            label4.append(l)
+
+        for i, l in enumerate(label4):
+            l[:, 0] = i
+        return torch.stack(img4, 0), torch.cat(label4, 0), path4, shapes4
 
 
 class Yolov5Dataset(CocoCVDataset):

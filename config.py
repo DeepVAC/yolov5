@@ -9,7 +9,7 @@ import torch
 from torchvision import transforms
 
 # import third:  libs in your program
-from deepvac import AttrDict, new
+from deepvac import AttrDict, new, ClassifierReport
 from deepvac.aug.yolo_aug import *
 from aug.aug import Yolov5TrainComposer, Yolov5ValComposer
 from data.datasets import Yolov5MosaicDataset, Yolov5Dataset
@@ -41,7 +41,7 @@ config.core.Yolov5Train.batch_size = 16
 config.core.Yolov5Train.num_workers = 8
 config.core.Yolov5Train.pin_memory = True
 config.core.Yolov5Train.nominal_batch_factor = 4
-config.core.Yolov5Train.model_path = "output/trained.pth"
+config.core.Yolov5Train.model_path = "output/pretrained.pth"
 # load script and quantize model path
 # config.core.Yolov5Train.jit_model_path = "<pretrained-model-path>"
 
@@ -56,7 +56,7 @@ config.core.Yolov5Train.model_path = "output/trained.pth"
 # config.cast.TraceCast.dynamic_quantize_dir = "./quantize.sq"
 
 ### ---------------------------------- dataset ---------------------------------
-config.core.Yolov5Train.img_size = 416
+config.core.Yolov5Train.img_size = 640
 config.core.Yolov5Train.border = [-config.core.Yolov5Train.img_size / 2] * 2
 
 config.aug.HSVAug = AttrDict()
@@ -73,12 +73,11 @@ config.aug.YoloPerspectiveAug.perspective = 0.0
 config.aug.YoloPerspectiveAug.border = config.core.Yolov5Train.border
 
 config.datasets.Yolov5MosaicDataset = AttrDict()
+config.datasets.Yolov5MosaicDataset.mixup = False
 config.datasets.Yolov5MosaicDataset.composer = Yolov5TrainComposer(config)
 
-# train_sample_path = "data/coco/images/train2017"
-# train_target_path = "data/coco/instances_train2017.json"
-train_sample_path = "/home/liyang/dataset/val"
-train_target_path = "/home/liyang/dataset/val.json"
+train_sample_path = "data/coco/images/train2017"
+train_target_path = "data/coco/instances_train2017.json"
 
 config.core.Yolov5Train.train_dataset = Yolov5MosaicDataset(config, train_sample_path, train_target_path, config.core.Yolov5Train.img_size, config.core.Yolov5Train.border)
 config.core.Yolov5Train.train_loader = torch.utils.data.DataLoader(config.core.Yolov5Train.train_dataset,
@@ -91,10 +90,8 @@ config.core.Yolov5Train.train_loader = torch.utils.data.DataLoader(config.core.Y
 config.datasets.Yolov5Dataset = AttrDict()
 config.datasets.Yolov5Dataset.composer = Yolov5ValComposer(config)
 
-# val_sample_path = "data/coco/images/val2017"
-# val_target_path = "data/coco/instances_val2017.json"
-val_sample_path = "/home/liyang/dataset/val"
-val_target_path = "/home/liyang/dataset/val.json"
+val_sample_path = "data/coco/images/val2017"
+val_target_path = "data/coco/instances_val2017.json"
 
 config.core.Yolov5Train.val_dataset = Yolov5Dataset(config, val_sample_path, val_target_path, config.core.Yolov5Train.img_size)
 config.core.Yolov5Train.val_loader = torch.utils.data.DataLoader(config.core.Yolov5Train.val_dataset,
@@ -102,6 +99,7 @@ config.core.Yolov5Train.val_loader = torch.utils.data.DataLoader(config.core.Yol
         num_workers=config.core.Yolov5Train.num_workers,
         collate_fn=Yolov5Dataset.collate_fn)
 
+config.core.Yolov5Train.reporter = ClassifierReport(cls_num=config.core.Yolov5Train.class_num)
 ### ---------------------------------- model -----------------------------------
 config.core.Yolov5Train.strides = [8, 16, 32]
 # support model include (Yolov5S, Yolov5L) now
@@ -136,20 +134,20 @@ config.core.Yolov5Train.criterion = Yolov5Loss(config, config.core.Yolov5Train.n
 ################################################################################
 ### TEST
 ################################################################################
-config_test = new("Yolov5Test")
+config.core.Yolov5Test = AttrDict()
 ### ---------------------------------- test ------------------------------------
-config_test.core.Yolov5Test.device = "cuda"
-config_test.core.Yolov5Test.class_num = 80
-config_test.core.Yolov5Test.img_size = 640
-config_test.core.Yolov5Test.strides = [8, 16, 32]
-config_test.core.Yolov5Test.model_reinterpret_cast = True
-config_test.core.Yolov5Test.cast_state_dict_strict = True
-config_test.core.Yolov5Test.net = Yolov5S(config_test.core.Yolov5Test.class_num, config_test.core.Yolov5Test.strides)
+config.core.Yolov5Test.device = "cuda"
+config.core.Yolov5Test.class_num = 80
+config.core.Yolov5Test.img_size = 640
+config.core.Yolov5Test.strides = [8, 16, 32]
+config.core.Yolov5Test.model_reinterpret_cast = True
+config.core.Yolov5Test.cast_state_dict_strict = True
+config.core.Yolov5Test.net = Yolov5S(config.core.Yolov5Test.class_num, config.core.Yolov5Test.strides)
 
-config_test.core.Yolov5Test.model_path = "output/trained.pth"
-config_test.core.Yolov5Test.test_sample_path = "your test sample path"
-config_test.core.Yolov5Test.half = False
-config_test.core.Yolov5Test.show_output_dir = "output/show"
-config_test.core.Yolov5Test.iou_thres = 0.45
-config_test.core.Yolov5Test.conf_thres = 0.25
-config_test.core.Yolov5Test.idx2cat = ["cls{}".format(i) for i in range(config_test.core.Yolov5Test.class_num)]
+config.core.Yolov5Test.model_path = "output/trained.pth"
+config.core.Yolov5Test.test_sample_path = "your test sample path"
+config.core.Yolov5Test.half = False
+config.core.Yolov5Test.show_output_dir = "output/show"
+config.core.Yolov5Test.iou_thres = 0.45
+config.core.Yolov5Test.conf_thres = 0.25
+config.core.Yolov5Test.idx2cat = ["cls{}".format(i) for i in range(config.core.Yolov5Test.class_num)]
