@@ -3,9 +3,11 @@
 import numpy as np
 import torch
 from deepvac import LOG, DeepvacTrain
+from utils import postProcess, metrics
 
 
 class Yolov5Train(DeepvacTrain):
+
     def preIter(self):
         if not self.config.is_train:
             return
@@ -23,12 +25,30 @@ class Yolov5Train(DeepvacTrain):
         self.addScalar('{}/boxLoss'.format(self.config.phase), loss_items[0], self.config.epoch)
         self.addScalar('{}/objLoss'.format(self.config.phase), loss_items[1], self.config.epoch)
         self.addScalar('{}/clsLoss'.format(self.config.phase), loss_items[2], self.config.epoch)
+
+        if self.config.is_train or (not self.config.reporter):
+            return
+        preds = [postProcess(i) for i in self.config.output]
+        res = metrics(self.config.sample, self.config.output, self.config.target, 0.7)
+        if not res:
+            return
+        for gt, pd in res:
+            print(">>> gt: ", gt)
+            print(">>> pd: ", pd)
+            self.config.reporter.add(gt, pd)
+
+    def postEpoch(self):
         self.config.accuracy = 0
+        if self.config.is_train or (not self.config.reporter):
+            return
+        self.config.reporter()
+        self.config.accuracy = self.config.reporter.accuracy
+        self.config.reporter.reset()
 
 
 if __name__ == '__main__':
     from config import config
 
-    det = DeepvacYolov5Train(config)
+    det = Yolov5Train(config)
     det()
 
