@@ -1,8 +1,8 @@
 import torch
-
 from torch import nn, Tensor
 from typing import List, Tuple
-from deepvac.backbones import Conv2dBNHardswish, BottleneckStd, BottleneckCSP, SPP, Focus, Concat
+from deepvac.backbones import Concat
+from .utils import *
 
 
 # to run script.pt on cuda in C++, you need to rewrite Focus
@@ -10,7 +10,7 @@ class Focus(nn.Module):
     # Focus wh information into c-space
     def __init__(self, in_planes, out_planes, kernel_size=1, stride=1, padding=None, groups=1):
         super(Focus, self).__init__()
-        self.conv = Conv2dBNHardswish(in_planes * 4, out_planes, kernel_size, stride, padding, groups)
+        self.conv = Conv2dBnAct(in_planes * 4, out_planes, kernel_size, stride, padding, groups)
 
     def forward(self, x):  # x(b,c,w,h) -> y(b,4c,w/2,h/2)
         #this is a workaround, see https://github.com/DeepVAC/yolov5/issues/5
@@ -116,42 +116,42 @@ class Yolov5S(nn.Module):
     def initBlock1(self):
         cfgs = [
             [Focus, [3, 32, 3, 1] ],
-            [Conv2dBNHardswish, [32, 64, 3, 2] ],
-            [BottleneckCSP, [64, 64, 1, True] ],
-            [Conv2dBNHardswish, [64, 128, 3, 2] ],
-            [BottleneckCSP, [128, 128, 3, True] ]
+            [Conv2dBnAct, [32, 64, 3, 2] ],
+            [BottleneckC3, [64, 64, 1, True] ],
+            [Conv2dBnAct, [64, 128, 3, 2] ],
+            [BottleneckC3, [128, 128, 3, True] ]
         ]
         self.block1 = self.buildBlock(cfgs)
 
     def initBlock2(self):
         cfgs = [
-            [Conv2dBNHardswish, [128, 256, 3, 2] ],
-            [BottleneckCSP, [256, 256, 3, True] ]
+            [Conv2dBnAct, [128, 256, 3, 2] ],
+            [BottleneckC3, [256, 256, 3, True] ]
         ]
         self.block2 = self.buildBlock(cfgs)
 
     def initBlock3(self):
         cfgs = [
-            [Conv2dBNHardswish, [256, 512, 3, 2] ],
+            [Conv2dBnAct, [256, 512, 3, 2] ],
             [SPP, [512, 512, [5, 9, 13]] ],
-            [BottleneckCSP, [512, 512, 1, False] ],
-            [Conv2dBNHardswish, [512, 256, 1, 1] ]
+            [BottleneckC3, [512, 512, 1, False] ],
+            [Conv2dBnAct, [512, 256, 1, 1] ]
         ]
         self.block3 = self.buildBlock(cfgs)
 
     def initBlock4(self):
         cfgs = [
-            [BottleneckCSP, [512, 256, 1, False] ],
-            [Conv2dBNHardswish, [256, 128, 1, 1] ],
+            [BottleneckC3, [512, 256, 1, False] ],
+            [Conv2dBnAct, [256, 128, 1, 1] ],
         ]
         self.block4 = self.buildBlock(cfgs)
 
     def initBlock5(self):
-        self.csp1 = self.buildBlock([[BottleneckCSP, [256, 128, 1, False]],])
-        self.conv1 = self.buildBlock([[Conv2dBNHardswish, [128, 128, 3, 2]],])
-        self.csp2 = self.buildBlock([[BottleneckCSP, [256, 256, 1, False]],])
-        self.conv2 = self.buildBlock([[Conv2dBNHardswish, [256, 256, 3, 2]],])
-        self.csp3 = self.buildBlock([[BottleneckCSP, [512, 512, 1, False]],])
+        self.csp1 = self.buildBlock([[BottleneckC3, [256, 128, 1, False]],])
+        self.conv1 = self.buildBlock([[Conv2dBnAct, [128, 128, 3, 2]],])
+        self.csp2 = self.buildBlock([[BottleneckC3, [256, 256, 1, False]],])
+        self.conv2 = self.buildBlock([[Conv2dBnAct, [256, 256, 3, 2]],])
+        self.csp3 = self.buildBlock([[BottleneckC3, [512, 512, 1, False]],])
 
     def initDetect(self):
         #initial anchors
@@ -186,43 +186,48 @@ class Yolov5L(Yolov5S):
     def initBlock1(self):
         cfgs = [
             [Focus, [3, 64, 3, 1] ],
-            [Conv2dBNHardswish, [64, 128, 3, 2] ],
-            [BottleneckCSP, [128, 128, 3, True] ],
-            [Conv2dBNHardswish, [128, 256, 3, 2] ],
-            [BottleneckCSP, [256, 256, 9, True] ]
+            [Conv2dBnAct, [64, 128, 3, 2] ],
+            [BottleneckC3, [128, 128, 3, True] ],
+            [Conv2dBnAct, [128, 256, 3, 2] ],
+            [BottleneckC3, [256, 256, 9, True] ]
         ]
         self.block1 = self.buildBlock(cfgs)
 
     def initBlock2(self):
         cfgs = [
-            [Conv2dBNHardswish, [256, 512, 3, 2] ],
-            [BottleneckCSP, [512, 512, 9, True] ]
+            [Conv2dBnAct, [256, 512, 3, 2] ],
+            [BottleneckC3, [512, 512, 9, True] ]
         ]
         self.block2 = self.buildBlock(cfgs)
 
     def initBlock3(self):
         cfgs = [
-            [Conv2dBNHardswish, [512, 1024, 3, 2] ],
+            [Conv2dBnAct, [512, 1024, 3, 2] ],
             [SPP, [1024, 1024, [5, 9, 13]] ],
-            [BottleneckCSP, [1024, 1024, 3, False] ],
-            [Conv2dBNHardswish, [1024, 512, 1, 1] ]
+            [BottleneckC3, [1024, 1024, 3, False] ],
+            [Conv2dBnAct, [1024, 512, 1, 1] ]
         ]
         self.block3 = self.buildBlock(cfgs)
 
     def initBlock4(self):
         cfgs = [
-            [BottleneckCSP, [1024, 512, 3, False] ],
-            [Conv2dBNHardswish, [512, 256, 1, 1] ],
+            [BottleneckC3, [1024, 512, 3, False] ],
+            [Conv2dBnAct, [512, 256, 1, 1] ],
         ]
         self.block4 = self.buildBlock(cfgs)
 
     def initBlock5(self):
-        self.csp1 = self.buildBlock([[BottleneckCSP, [512, 256, 3, False]],])
-        self.conv1 = self.buildBlock([[Conv2dBNHardswish, [256, 256, 3, 2]],])
-        self.csp2 = self.buildBlock([[BottleneckCSP, [512, 512, 3, False]],])
-        self.conv2 = self.buildBlock([[Conv2dBNHardswish, [512, 512, 3, 2]],])
-        self.csp3 = self.buildBlock([[BottleneckCSP, [1024, 1024, 3, False]],])
+        self.csp1 = self.buildBlock([[BottleneckC3, [512, 256, 3, False]],])
+        self.conv1 = self.buildBlock([[Conv2dBnAct, [256, 256, 3, 2]],])
+        self.csp2 = self.buildBlock([[BottleneckC3, [512, 512, 3, False]],])
+        self.conv2 = self.buildBlock([[Conv2dBnAct, [512, 512, 3, 2]],])
+        self.csp3 = self.buildBlock([[BottleneckC3, [1024, 1024, 3, False]],])
 
     def initDetect(self):
         #initial anchors
         self.detect = Detect(self.class_num, [[10, 13, 16, 30, 33, 23], [30, 61, 62, 45, 59, 119], [116, 90, 156, 198, 373, 326]], [256, 512, 1024])
+
+
+if __name__ == "__main__":
+    model = Yolov5S()
+    print(model)

@@ -74,8 +74,12 @@ config.aug.YoloPerspectiveAug.border = config.core.Yolov5Train.border
 
 config.datasets.Yolov5MosaicDataset = AttrDict()
 config.datasets.Yolov5MosaicDataset.composer = Yolov5TrainComposer(config)
-train_sample_path = "data/coco/images/train2017"
-train_target_path = "data/coco/instances_train2017.json"
+
+# train_sample_path = "data/coco/images/train2017"
+# train_target_path = "data/coco/instances_train2017.json"
+train_sample_path = "/home/liyang/dataset/val"
+train_target_path = "/home/liyang/dataset/val.json"
+
 config.core.Yolov5Train.train_dataset = Yolov5MosaicDataset(config, train_sample_path, train_target_path, config.core.Yolov5Train.img_size, config.core.Yolov5Train.border)
 config.core.Yolov5Train.train_loader = torch.utils.data.DataLoader(config.core.Yolov5Train.train_dataset,
         batch_size=config.core.Yolov5Train.batch_size,
@@ -86,8 +90,12 @@ config.core.Yolov5Train.train_loader = torch.utils.data.DataLoader(config.core.Y
 
 config.datasets.Yolov5Dataset = AttrDict()
 config.datasets.Yolov5Dataset.composer = Yolov5ValComposer(config)
-val_sample_path = "data/coco/images/val2017"
-val_target_path = "data/coco/instances_val2017.json"
+
+# val_sample_path = "data/coco/images/val2017"
+# val_target_path = "data/coco/instances_val2017.json"
+val_sample_path = "/home/liyang/dataset/val"
+val_target_path = "/home/liyang/dataset/val.json"
+
 config.core.Yolov5Train.val_dataset = Yolov5Dataset(config, val_sample_path, val_target_path, config.core.Yolov5Train.img_size)
 config.core.Yolov5Train.val_loader = torch.utils.data.DataLoader(config.core.Yolov5Train.val_dataset,
         batch_size=config.core.Yolov5Train.batch_size,
