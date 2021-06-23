@@ -40,17 +40,21 @@ rm coco2017labels.zip
 在config.py文件中作如下配置：     
 
 ```python
-from deepvac.core import AttrDict, new
+from deepvac import AttrDict, new
+
 # new("your train class name")
 config = new("Yolov5Train")
+
 # train dataset
 train_sample_path = "data/coco/images/train2017"
 train_target_path = "data/coco/instances_train2017.json"
 config.core.Yolov5Train.train_dataset = Yolov5MosaicDataset(config, train_sample_path, train_target_path, config.core.Yolov5Train.img_size, config.core.Yolov5Train.border)
+
 # val dataset
 val_sample_path = "data/coco/images/val2017"
 val_target_path = "data/coco/instances_val2017.json"
 config.core.Yolov5Train.val_dataset = Yolov5Dataset(config, val_sample_path, val_target_path, config.core.Yolov5Train.img_size)
+
 # test dataset
 config.core.Yolov5Test = AttrDict()
 config.core.Yolov5Test.test_sample_path = "your test images dir"
@@ -70,12 +74,17 @@ config.core.Yolov5Test.test_sample_path = "your test images dir"
 
 ```python
 config.core.Yolov5Train.model_path = "output/pretrained.pth"
+
 config.core.Yolov5Train.class_num = 80
+
 config.core.Yolov5Train.amp = False
+
 config.core.Yolov5Train.ema = True
 # define ema_decay with other func
 # config.ema_decay = lambda x: 0.9999 * (1 - math.exp(-x / 2000))
+
 config.core.Yolov5Train.nominal_batch_factor = 4
+
 config.core.Yolov5Train.shuffle = True
 config.core.Yolov5Train.batch_size = 16
 config.core.Yolov5Train.num_workers = 8
@@ -112,6 +121,7 @@ config.core.Yolov5Test.idx2cat = ["cls{}".format(i) for i in range(config.core.Y
 config.core.Yolov5Test.model_path = <trained-model>
 config.core.Yolov5Test.test_sample_path = <test-sample-path>
 python3 test.py
+
 # 方法2
 python3 test.py <trained-model(required)> <test-sample-path(required)> <label-path(optional)>
 ```
