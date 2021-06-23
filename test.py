@@ -28,7 +28,7 @@ class Yolov5Test(Deepvac):
 
     def preIter(self):
         self.config.ratio, self.config.pad, self.config.filepath = self.config.target
-        assert len(self.config.filepath) == 1, 'config_test.core.Yolov5Test.test_batch_size must be set to 1 in current test mode.'
+        assert len(self.config.filepath) == 1, 'config.core.Yolov5Test.test_batch_size must be set to 1 in current test mode.'
 
         self.config.ratio = torch.cat(self.config.ratio * 2).to(self.config.device)
         self.config.pad = torch.cat(self.config.pad * 2).to(self.config.device)
@@ -101,30 +101,30 @@ class Yolov5Test(Deepvac):
 
 
 if __name__ == "__main__":
-    from config import config_test
+    from config import config
 
     def check_args(idx, argv):
         return (len(argv) > idx) and (os.path.exists(argv[idx]))
 
     if check_args(1, sys.argv):
-        config_test.core.Yolov5Test.model_path = sys.argv[1]
+        config.core.Yolov5Test.model_path = sys.argv[1]
     if check_args(2, sys.argv):
-        config_test.core.Yolov5Test.test_sample_path = sys.argv[2]
+        config.core.Yolov5Test.test_sample_path = sys.argv[2]
     if check_args(3, sys.argv):
-        config_test.core.Yolov5Test.test_label_path = sys.argv[3]
+        config.core.Yolov5Test.test_label_path = sys.argv[3]
 
-    if (config_test.core.Yolov5Test.model_path is None) or (config_test.core.Yolov5Test.test_sample_path is None):
+    if (config.core.Yolov5Test.model_path is None) or (config.core.Yolov5Test.test_sample_path is None):
         helper = '''model_path or test_sample_path not found, please check:
-                config_test.core.Yolov5Test.model_path or sys.argv[1] to init model path
-                config_test.core.Yolov5Test.test_sample_path or sys.argv[2] to init test sample path
-                config_test.core.Yolov5Test.test_label_path or sys.argv[3] to init test sample path (not required)
+                config.core.Yolov5Test.model_path or sys.argv[1] to init model path
+                config.core.Yolov5Test.test_sample_path or sys.argv[2] to init test sample path
+                config.core.Yolov5Test.test_label_path or sys.argv[3] to init test sample path (not required)
                 for example:
                 python3 test.py <trained-model-path> <test sample path> [test label path(not required)]'''
         print(helper)
         sys.exit(1)
 
-    config_test.core.Yolov5Test.img_size = 640
-    config_test.core.Yolov5Test.test_dataset = Yolov5TestDataset(config_test, config_test.core.Yolov5Test.test_sample_path, config_test.core.Yolov5Test.img_size)
-    config_test.core.Yolov5Test.test_loader = torch.utils.data.DataLoader(config_test.core.Yolov5Test.test_dataset, batch_size=1)
-    Yolov5Test(config_test)()
+    config.core.Yolov5Test.img_size = 640
+    config.core.Yolov5Test.test_dataset = Yolov5TestDataset(config, config.core.Yolov5Test.test_sample_path, config.core.Yolov5Test.img_size)
+    config.core.Yolov5Test.test_loader = torch.utils.data.DataLoader(config.core.Yolov5Test.test_dataset, batch_size=1)
+    Yolov5Test(config)()
 
