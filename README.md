@@ -148,6 +148,13 @@ TODO
 ```
 
 ## 9. 使用coreml模型 
+- 测试环境   
+```
+torch == 1.8.1
+numpy == 1.19.5
+coremltools == 4.1
+```
+
 - 转换coreml模型(*.mlmodel)
 ```
 import coremltools
