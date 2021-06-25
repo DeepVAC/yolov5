@@ -8,8 +8,8 @@ import torch
 from torchvision import ops
 from deepvac import LOG, Deepvac
 from deepvac.utils import pallete20
-from deepvac.backbones import Conv2dBnAct
 from data.datasets import Yolov5TestDataset
+from modules.utils import setCoreml
 
 
 class Yolov5Test(Deepvac):
@@ -78,6 +78,11 @@ class Yolov5Test(Deepvac):
         LOG.logI("file: {0} >>> class: {1} >>> score: {2} >>> coord: {3}".format(self.config.filepath, classes, scores, coords))
         self.plotRectangle(self.config.filepath, (classes, scores, coords), self.config.show_output_dir)
 
+    def export3rd(self, output_file=None):
+        if self.deepvac_config.cast and self.deepvac_config.cast.CoremlCast:
+            setCoreml(self.config.net)
+        super(Yolov5Test, self).export3rd(output_file)
+
     def plotRectangle(self, filepath, preds, save_dir):
         file_name = filepath.split('/')[-1]
         if not os.path.exists(save_dir):
@@ -123,7 +128,6 @@ if __name__ == "__main__":
         print(helper)
         sys.exit(1)
 
-    config.core.Yolov5Test.img_size = 640
     config.core.Yolov5Test.test_dataset = Yolov5TestDataset(config, config.core.Yolov5Test.test_sample_path, config.core.Yolov5Test.img_size)
     config.core.Yolov5Test.test_loader = torch.utils.data.DataLoader(config.core.Yolov5Test.test_dataset, batch_size=1)
     Yolov5Test(config)()

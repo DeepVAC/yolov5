@@ -124,13 +124,12 @@ box_scale = 0.05
 obj_scale = 1.0
 config.core.Yolov5Train.criterion = Yolov5Loss(config, config.core.Yolov5Train.net.detect, cls_scale, box_scale, obj_scale, config.core.Yolov5Train.strides, config.core.Yolov5Train.device)
 
-
 ################################################################################
 ### TEST
 ################################################################################
 config.core.Yolov5Test = AttrDict()
 ### ---------------------------------- test ------------------------------------
-config.core.Yolov5Test.device = "cuda"
+config.core.Yolov5Test.device = "cpu"
 config.core.Yolov5Test.class_num = 80
 config.core.Yolov5Test.img_size = 640
 config.core.Yolov5Test.strides = [8, 16, 32]
@@ -145,3 +144,21 @@ config.core.Yolov5Test.show_output_dir = "output/show"
 config.core.Yolov5Test.iou_thres = 0.45
 config.core.Yolov5Test.conf_thres = 0.25
 config.core.Yolov5Test.idx2cat = ["cls{}".format(i) for i in range(config.core.Yolov5Test.class_num)]
+
+################################################################################
+### CAST
+################################################################################
+import coremltools
+config.cast.CoremlCast = AttrDict()
+config.cast.TraceCast = AttrDict()
+
+config.cast.TraceCast.model_dir = "output/trace.pt"
+config.cast.CoremlCast.model_dir = "output/coreml.mlmodel"
+config.cast.CoremlCast.input_type = None
+config.cast.CoremlCast.scale = 1.0 / 255.0
+config.cast.CoremlCast.color_layout = 'BGR'
+config.cast.CoremlCast.blue_bias = 0
+config.cast.CoremlCast.green_bias = 0
+config.cast.CoremlCast.red_bias = 0
+config.cast.CoremlCast.minimum_deployment_target = coremltools.target.iOS13
+config.cast.CoremlCast.classfier_config = ["cls{}".format(i) for i in range(config.core.Yolov5Test.class_num)]
