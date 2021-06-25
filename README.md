@@ -143,39 +143,51 @@ config.core.Yolov5Test.jit_model_path = <torchscript-model-path>
 ```
 
 ## 8. 使用静态量化模型
-如果训练过程中未开启config.core.Yolov5Test.static_quantize_dir开关，可以在测试过程中转化静态量化模型     
-- 转换静态模型(*.sq)     
-
-```python
-config.core.Yolov5Test.ema = False
-config.core.Yolov5Test.static_quantize_dir = "output/script.sq"
 ```
-  按照步骤6完成测试，静态量化模型将保存至config.core.Yolov5Test.static_quantize_dir指定文件位置      
-
-- 加载静态量化模型
-
-```python
-config.core.Yolov5Test.jit_model_path = <static-quantize-model-path>
+TODO
 ```
-当前yolov5-1支持静态量化模型导出，但在test过程中会出现upsample错误，我们推测是pytorch bug导致了这个问题，目前这个bug已经加入TODO    
+
+## 9. 使用coreml模型 
+- 测试环境   
+```
+torch == 1.8.1
+numpy == 1.19.5
+coremltools == 4.1
+```
+
+- 转换coreml模型(*.mlmodel)
+```
+import coremltools
+config.cast.CoremlCast = AttrDict()
+config.cast.TraceCast = AttrDict()
+config.cast.TraceCast.model_dir = "output/trace.pt"
+config.cast.CoremlCast.model_dir = "output/coreml.mlmodel"
+config.cast.CoremlCast.input_type = None
+config.cast.CoremlCast.scale = 1.0 / 255.0
+config.cast.CoremlCast.color_layout = 'BGR'
+config.cast.CoremlCast.blue_bias = 0
+config.cast.CoremlCast.green_bias = 0
+config.cast.CoremlCast.red_bias = 0
+config.cast.CoremlCast.minimum_deployment_target = coremltools.target.iOS13
+config.cast.CoremlCast.classfier_config = ["cls{}".format(i) for i in range(config.core.Yolov5Test.class_num)]
+```
+- coreml模型推理   
+推理环境: macos13 or later     
 
 
-## 9. 更多功能
+## 10. 更多功能
 如果要在本项目中开启如下功能：
-- 预训练模型加载
-- checkpoint加载
 - 使用tensorboard
-- 启用TorchScript
 - 转换ONNX
 - 转换NCNN
-- 转换CoreML
 - 开启量化
 - 开启自动混合精度训练
 
 请参考[DeepVAC](https://github.com/DeepVAC/deepvac)
 
-## 10. TODO
+## 11. TODO
 - 20210201 项目增加了对Yolov5S和Yolov5L的支持    
 - 20210219 修复了torchscript模型C++推理代码在cuda上CUDNN_STATUS_INTER_ERROR问题(在modules/model.py中重写Fcous模块）     
 - 修复在test过程中，静态量化模型报错问题    
 - 20210622 项目更新来适应新版本deepvac
+- 20210625 项目增加coreml模型转换
