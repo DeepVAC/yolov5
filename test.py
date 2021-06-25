@@ -8,8 +8,8 @@ import torch
 from torchvision import ops
 from deepvac import LOG, Deepvac
 from deepvac.utils import pallete20
-from deepvac.backbones import Conv2dBnAct
 from data.datasets import Yolov5TestDataset
+from modules.utils import Conv2dBNHardswish, Hardswish
 
 
 class Yolov5Test(Deepvac):
@@ -20,6 +20,12 @@ class Yolov5Test(Deepvac):
             ...
         if self.config.half:
             assert self.config.device.type == "cuda", "half forward must on cuda device"
+
+        # for coreml export
+        for m in self.config.net.modules():
+            if isinstance(m, Conv2dBNHardswish):
+                if isinstance(m.act, torch.nn.Hardswish):
+                    m.act = Hardswish()
 
     def test(self):
         self.config.non_det_num = 0
@@ -123,7 +129,6 @@ if __name__ == "__main__":
         print(helper)
         sys.exit(1)
 
-    config.core.Yolov5Test.img_size = 640
     config.core.Yolov5Test.test_dataset = Yolov5TestDataset(config, config.core.Yolov5Test.test_sample_path, config.core.Yolov5Test.img_size)
     config.core.Yolov5Test.test_loader = torch.utils.data.DataLoader(config.core.Yolov5Test.test_dataset, batch_size=1)
     Yolov5Test(config)()

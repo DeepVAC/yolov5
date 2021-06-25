@@ -1,22 +1,9 @@
+#! /usr/bin/python3
+# -*- coding:utf-8 -*-
 import torch
-
 from torch import nn, Tensor
 from typing import List, Tuple
-from deepvac.backbones import Conv2dBNHardswish, BottleneckStd, BottleneckCSP, SPP, Focus, Concat
-
-
-# to run script.pt on cuda in C++, you need to rewrite Focus
-class Focus(nn.Module):
-    # Focus wh information into c-space
-    def __init__(self, in_planes, out_planes, kernel_size=1, stride=1, padding=None, groups=1):
-        super(Focus, self).__init__()
-        self.conv = Conv2dBNHardswish(in_planes * 4, out_planes, kernel_size, stride, padding, groups)
-
-    def forward(self, x):  # x(b,c,w,h) -> y(b,4c,w/2,h/2)
-        #this is a workaround, see https://github.com/DeepVAC/yolov5/issues/5
-        xcpu = x.cpu()
-        xnew = torch.cat([xcpu[..., ::2, ::2], xcpu[..., 1::2, ::2], xcpu[..., ::2, 1::2], xcpu[..., 1::2, 1::2]], 1)
-        return self.conv(xnew.to(x.device))
+from .utils import *
 
 
 class Detect(nn.Module):
