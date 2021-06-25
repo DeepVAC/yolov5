@@ -102,3 +102,9 @@ class Mish(nn.Module):
     @staticmethod
     def forward(x):
         return x * F.softplus(x).tanh()
+
+
+def setCoreml(model):
+    for m in model.modules():
+        if isinstance(m, Conv2dBNHardswish) and isinstance(m.act, torch.nn.Hardswish):
+            m.act = Hardswish()

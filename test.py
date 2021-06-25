@@ -9,7 +9,7 @@ from torchvision import ops
 from deepvac import LOG, Deepvac
 from deepvac.utils import pallete20
 from data.datasets import Yolov5TestDataset
-from modules.utils import Conv2dBNHardswish, Hardswish
+from modules.utils import setCoreml
 
 
 class Yolov5Test(Deepvac):
@@ -20,12 +20,6 @@ class Yolov5Test(Deepvac):
             ...
         if self.config.half:
             assert self.config.device.type == "cuda", "half forward must on cuda device"
-
-        # for coreml export
-        for m in self.config.net.modules():
-            if isinstance(m, Conv2dBNHardswish):
-                if isinstance(m.act, torch.nn.Hardswish):
-                    m.act = Hardswish()
 
     def test(self):
         self.config.non_det_num = 0
@@ -83,6 +77,11 @@ class Yolov5Test(Deepvac):
 
         LOG.logI("file: {0} >>> class: {1} >>> score: {2} >>> coord: {3}".format(self.config.filepath, classes, scores, coords))
         self.plotRectangle(self.config.filepath, (classes, scores, coords), self.config.show_output_dir)
+
+    def export3rd(self, output_file=None):
+        if self.deepvac_config.cast and self.deepvac_config.cast.CoremlCast:
+            setCoreml(self.config.net)
+        super(Yolov5Test, self).export3rd(output_file)
 
     def plotRectangle(self, filepath, preds, save_dir):
         file_name = filepath.split('/')[-1]
