@@ -157,6 +157,7 @@ coremltools == 4.1
 
 - 转换coreml模型(*.mlmodel)
 ```
+# 如果指定路径，那么在训练或者测试过程中都会进行模型转换
 import coremltools
 config.cast.CoremlCast = AttrDict()
 config.cast.TraceCast = AttrDict()
@@ -170,6 +171,13 @@ config.cast.CoremlCast.green_bias = 0
 config.cast.CoremlCast.red_bias = 0
 config.cast.CoremlCast.minimum_deployment_target = coremltools.target.iOS13
 config.cast.CoremlCast.classfier_config = ["cls{}".format(i) for i in range(config.core.Yolov5Test.class_num)]
+
+# 训练过程中转换(cast2cpu配置可配置在config.py文件也可以配置在train.py文件)
+config.core.Yolov5Train.cast2cpu = True
+python3 train.py
+# 测试过程中转换(cast2cpu配置可配置在config.py文件也可以配置在train.py文件)
+config.core.Yolov5Test.cast2cpu = True
+python3 test.py <trained-model(required)> <test-sample-path(required)> <label-path(optional)>
 ```
 - coreml模型推理   
 推理环境: macos13 or later     
