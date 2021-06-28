@@ -29,6 +29,6 @@ class Yolov5Train(DeepvacTrain):
 if __name__ == '__main__':
     from config import config
 
-    det = DeepvacYolov5Train(config)
+    det = Yolov5Train(config)
     det()
 

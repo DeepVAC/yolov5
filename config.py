@@ -147,8 +147,11 @@ config.core.Yolov5Test.idx2cat = ["cls{}".format(i) for i in range(config.core.Y
 
 ################################################################################
 ### CAST
+config.core.Yolov5Train.cast2cpu = True
+config.core.Yolov5Test.cast2cpu = True
 ################################################################################
 import coremltools
+
 config.cast.CoremlCast = AttrDict()
 config.cast.TraceCast = AttrDict()
 
