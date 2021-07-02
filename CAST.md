@@ -200,7 +200,7 @@ python3 test.py <trained-model-file(required)> <test-sample-path(required)> <tes
 ```
 
 - ncnn forward
-```
+```python3
 import cv2
 import numpy as np
 try:
