@@ -19,18 +19,30 @@ class Conv2dBNHardswish(nn.Module):
         return self.act(self.bn(self.conv(x)))
 
 
-# to run script.pt on cuda in C++, you need to rewrite Focus
 class Focus(nn.Module):
-    # Focus wh information into c-space
     def __init__(self, in_planes, out_planes, kernel_size=1, stride=1, padding=None, groups=1):
         super(Focus, self).__init__()
         self.conv = Conv2dBNHardswish(in_planes * 4, out_planes, kernel_size, stride, padding, groups)
+        self.cat = Concat()
 
     def forward(self, x):  # x(b,c,w,h) -> y(b,4c,w/2,h/2)
-        #this is a workaround, see https://github.com/DeepVAC/yolov5/issues/5
-        xcpu = x.cpu()
-        xnew = torch.cat([xcpu[..., ::2, ::2], xcpu[..., 1::2, ::2], xcpu[..., ::2, 1::2], xcpu[..., 1::2, 1::2]], 1)
-        return self.conv(xnew.to(x.device))
+        # part-1
+        gain = torch.tensor([[1, 0], [0, 0]])
+        filters = torch.zeros(3, 1, 2, 2) + gain
+        x1 = F.conv2d(x, filters, stride=2, groups=3)
+        # part-2
+        gain = torch.tensor([[0, 0], [1, 0]])
+        filters = torch.zeros(3, 1, 2, 2) + gain
+        x2 = F.conv2d(x, filters, stride=2, groups=3)
+        # part-3
+        gain = torch.tensor([[0, 1], [0, 0]])
+        filters = torch.zeros(3, 1, 2, 2) + gain
+        x3 = F.conv2d(x, filters, stride=2, groups=3)
+        # part-4
+        gain = torch.tensor([[0, 0], [0, 1]])
+        filters = torch.zeros(3, 1, 2, 2) + gain
+        x4 = F.conv2d(x, filters, stride=2, groups=3)
+        return self.conv(self.cat([x1, x2, x3, x4]))
 
 
 class BottleneckStd(nn.Module):
@@ -108,3 +120,4 @@ def setCoreml(model):
     for m in model.modules():
         if isinstance(m, Conv2dBNHardswish) and isinstance(m.act, torch.nn.Hardswish):
             m.act = Hardswish()
+

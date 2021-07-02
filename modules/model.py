@@ -1,8 +1,9 @@
 #! /usr/bin/python3
 # -*- coding:utf-8 -*-
 import torch
+from typing import List
 from torch import nn, Tensor
-from typing import List, Tuple
+from torch.nn import functional as F
 from .utils import *
 
 
@@ -13,10 +14,12 @@ class Detect(nn.Module):
         self.output_num_per_anchor = class_num + 5
         self.detect_layer_num = len(anchors)
         self.anchor_num = len(anchors[0]) // 2
-        self.grid = [torch.zeros(1)] * self.detect_layer_num
+        self.grid = [torch.zeros(1, 1, 1, 1, 1)] * self.detect_layer_num
         anchor_t = torch.tensor(anchors).float().view(self.detect_layer_num, -1, 2)
         self.register_buffer('anchors', anchor_t)  # shape(detect_layer_num, anchor_num,2)
-        self.register_buffer('anchor_grid', anchor_t.clone().view(self.detect_layer_num, 1, -1, 1, 1, 2))  # shape(detect_layer_num,1, anchor_num,1,1,2)
+        # onnx cast not support register_buffer
+        # self.register_buffer('anchor_grid', anchor_t.clone().view(self.detect_layer_num, 1, -1, 1, 1, 2))  # shape(detect_layer_num,1, anchor_num,1,1,2)
+        self.anchor_grid = anchor_t.clone().view(self.detect_layer_num, 1, -1, 1, 1, 2)
         self.conv_list = nn.ModuleList(nn.Conv2d(x, self.output_num_per_anchor * self.anchor_num, 1) for x in in_planes_list)
 
         self.output: List[Tensor] = [torch.empty(0),] * 3
@@ -26,16 +29,28 @@ class Detect(nn.Module):
         for i, layer in enumerate(self.conv_list):
             x[i] = layer(x[i])
             bs, _, ny, nx = x[i].shape
-            #x(bs,255,20,20) to x(bs,3,20,20,85)
             x[i] = x[i].view(bs, self.anchor_num, self.output_num_per_anchor, ny, nx).permute(0, 1, 3, 4, 2).contiguous()
 
-            # if not self.is_training:
-            if self.grid[i].shape[2:4] != x[i].shape[2:4]:
+            _, _, gy, gx, _ = self.grid[i].shape
+            if (gx != nx) or (gy != ny):
                 self.grid[i] = self.makeGrid(nx, ny).to(x[i].device)
 
             y = x[i].sigmoid()
-            y[..., 0:2] = (y[..., 0:2] * 2. - 0.5 + self.grid[i].to(x[i].device)) * self.strides[i]  # xy
-            y[..., 2:4] = (y[..., 2:4] * 2) ** 2 * self.anchor_grid[i]  # wh
+            # workaround for ncnn
+            # xy = y[..., :2]
+            pad = (0, int(self.output_num_per_anchor-2))
+            grid = F.pad(self.grid[i], pad, 'constant', 0)
+            stride = F.pad(self.stride[i], pad, 'constant', 1)
+            xy = (y * 2. - 0.5 + grid) * stride
+            # wh = y[..., 2:4]
+            pad = (2, int(self.output_num_per_anchor-4))
+            anchor_grid = F.pad(self.anchor_grid[i], pad, 'constant', 1)
+            wh = (y * 2) ** 2 * anchor_grid
+
+            y = y * (stride == 1) + xy * (stride != 1)
+            y = y * (anchor_grid == 1) + wh * (anchor_grid != 1)
+            # y[..., 0:2] = (y[..., 0:2] * 2. - 0.5 + self.grid[i].to(x[i].device)) * self.stride[i]  # xy
+            # y[..., 2:4] = (y[..., 2:4] * 2) ** 2 * self.anchor_grid[i]  # wh
             inference_result.append(y.view(bs, -1, self.output_num_per_anchor))
 
         self.output = x
@@ -51,9 +66,10 @@ class Yolov5S(nn.Module):
     '''
         yolov5s
     '''
-    def __init__(self, class_num=80, strides=[8, 16, 32]):
+    def __init__(self, class_num=80, stride=[8, 16, 32]):
         super(Yolov5S, self).__init__()
         self.class_num = class_num
+        self.stride = stride
         self.upsample = nn.Upsample(scale_factor=2., mode="nearest")
         self.cat = Concat(1)
         self.initBlock1()
@@ -62,8 +78,8 @@ class Yolov5S(nn.Module):
         self.initBlock4()
         self.initBlock5()
         self.initDetect()
+        self.initDetectStride()
         self.initBNParam()
-        self.detect.strides = torch.Tensor(strides)
         self.initParamGroup()
 
     def buildBlock(self, cfgs):
@@ -141,8 +157,10 @@ class Yolov5S(nn.Module):
         self.csp3 = self.buildBlock([[BottleneckCSP, [512, 512, 1, False]],])
 
     def initDetect(self):
-        #initial anchors
         self.detect = Detect(self.class_num, [[10, 13, 16, 30, 33, 23], [30, 61, 62, 45, 59, 119], [116, 90, 156, 198, 373, 326]], [128, 256, 512])
+
+    def initDetectStride(self):
+        self.detect.stride = torch.tensor(self.stride).view(-1, 1).repeat(1, 2)
 
     def initBNParam(self):
         for m in self.modules():
@@ -167,8 +185,8 @@ class Yolov5L(Yolov5S):
     '''
         yolov5-L
     '''
-    def __init__(self, class_num=80, strides=[8, 16, 32]):
-        super(Yolov5L, self).__init__(class_num, strides)
+    def __init__(self, class_num=80, stride=[8, 16, 32]):
+        super(Yolov5L, self).__init__(class_num, stride)
 
     def initBlock1(self):
         cfgs = [
@@ -213,3 +231,4 @@ class Yolov5L(Yolov5S):
     def initDetect(self):
         #initial anchors
         self.detect = Detect(self.class_num, [[10, 13, 16, 30, 33, 23], [30, 61, 62, 45, 59, 119], [116, 90, 156, 198, 373, 326]], [256, 512, 1024])
+

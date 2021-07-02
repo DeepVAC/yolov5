@@ -10,7 +10,6 @@ class Yolov5Loss(LossBase):
     def __init__(self, deepvac_config, det, cls_scale, box_scale, obj_scale, strides=[8, 16, 32], device="cpu"):
         super(Yolov5Loss, self).__init__(deepvac_config)
         self.cls, self.box, self.obj = cls_scale, box_scale, obj_scale
-        self.strides = torch.Tensor(strides)
         self.device = device
         # define criteria
         BCEcls = nn.BCEWithLogitsLoss(pos_weight=torch.tensor([self.cls_pw], device=self.device))
@@ -20,7 +19,7 @@ class Yolov5Loss(LossBase):
         self.BCEcls, self.BCEobj = BCEcls, BCEobj
         # model info
         det = det.to(self.device)
-        self.ssi = (self.strides == 16).nonzero(as_tuple=False).item()
+        self.ssi = (strides == 16).nonzero(as_tuple=False).item()
         for k in ("anchor_num", "class_num", "detect_layer_num", "anchors"):
             setattr(self, k, getattr(det, k))
 
@@ -194,3 +193,4 @@ class Yolov5Loss(LossBase):
     @staticmethod
     def smoothBCE(eps=0.1):
         return 1.0 - 0.5 * eps, 0.5 * eps
+

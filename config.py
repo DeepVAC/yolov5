@@ -150,18 +150,3 @@ config.core.Yolov5Test.idx2cat = ["cls{}".format(i) for i in range(config.core.Y
 config.core.Yolov5Train.cast2cpu = True
 config.core.Yolov5Test.cast2cpu = True
 ################################################################################
-import coremltools
-
-config.cast.CoremlCast = AttrDict()
-config.cast.TraceCast = AttrDict()
-
-config.cast.TraceCast.model_dir = "output/trace.pt"
-config.cast.CoremlCast.model_dir = "output/coreml.mlmodel"
-config.cast.CoremlCast.input_type = None
-config.cast.CoremlCast.scale = 1.0 / 255.0
-config.cast.CoremlCast.color_layout = 'BGR'
-config.cast.CoremlCast.blue_bias = 0
-config.cast.CoremlCast.green_bias = 0
-config.cast.CoremlCast.red_bias = 0
-config.cast.CoremlCast.minimum_deployment_target = coremltools.target.iOS13
-config.cast.CoremlCast.classfier_config = ["cls{}".format(i) for i in range(config.core.Yolov5Test.class_num)]
