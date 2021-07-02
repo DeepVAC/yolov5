@@ -245,7 +245,7 @@ ret, mat_out = ex.extract("output")
 
 # torch -> tnn
 - config.py setting
- ```
+```python3
 config.cast.TnnCast.onnx_model_dir = <output-onnx-onnx-file>
 config.cast.TnnCast.onnx_version = 11
 config.cast.TnnCast.onnx_input_names = ["input"]
@@ -266,7 +266,7 @@ python3 test.py <trained-model-file(required)> <test-sample-path(required)> <tes
 
 # torch -> mnn
 - config.py setting
- ```
+```python3
 config.cast.MnnCast.onnx_model_dir = <output-onnx-onnx-file>
 config.cast.MnnCast.onnx_version = 11
 config.cast.MnnCast.onnx_input_names = ["input"]
@@ -319,7 +319,7 @@ output_var = MNN.expr.convert(output_var, MNN.expr.NHWC)
 
 # torch -> tensorrt
 - config.py setting
- ```
+ ```python3
 config.cast.TensorrtCast.onnx_model_dir = <output-onnx-onnx-file>
 config.cast.TensorrtCast.onnx_version = 11
 config.cast.TensorrtCast.onnx_input_names = ["input"]
